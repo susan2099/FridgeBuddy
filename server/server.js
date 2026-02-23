@@ -5,13 +5,11 @@ const readline = require("readline");
 
 const app = express();
 const PORT = 3000;
-const DATA_FILE = "./fridge.yaml";
+const DATA_FILE = "./fridge.yaml"; // YAML storage file
 
-app.use(express.json());
 
-/* ======================
-   YAML FILE HELPERS
-====================== */
+
+
 
 async function readFridge() {
   try {
@@ -35,7 +33,11 @@ function askQuestion(rl, question) {
   return new Promise(resolve => rl.question(question, resolve));
 }
 
-async function promptForItem() {
+// ======================
+// CLI ADD/DELETE HELPERS
+// ======================
+
+async function addItemCLI() {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -63,8 +65,13 @@ async function promptForItem() {
 
   const fridge = await readFridge();
 
+  // generate a simple numeric ID by taking the max existing id and adding 1
+  const nextId = fridge.items.length
+    ? Math.max(...fridge.items.map(i => i.id)) + 1
+    : 1;
+
   const newItem = {
-    id: Date.now(),
+    id: nextId,
     name,
     quantity: Number(quantityInput) || 1,
     expiry: expiry || null,
@@ -77,40 +84,84 @@ async function promptForItem() {
   console.log("Item added:", newItem, "\n");
 }
 
-/* ======================
-   ROUTES
-====================== */
-
-app.get("/", async (req, res) => {
+async function deleteItemCLI() {
   const fridge = await readFridge();
+  if (!fridge.items.length) {
+    console.log("No items to delete.\n");
+    return;
+  }
 
-  const itemsHtml = fridge.items.length
-    ? fridge.items
-        .map(
-          item => `
-            <li>
-              <strong>${item.name}</strong>
-              — Qty: ${item.quantity}
-              ${item.expiry ? `— Exp: ${item.expiry}` : ""}
-            </li>
-          `
-        )
-        .join("")
-    : "<li>No items yet. Add some from the terminal</li>";
+  console.log("\nCurrent fridge items:");
+  fridge.items.forEach((item, idx) => {
+    console.log(
+      `${idx + 1}) ${item.name} (qty ${item.quantity})${
+        item.expiry ? ` exp ${item.expiry}` : ""
+      } [id=${item.id}]`
+    );
+  });
 
-  res.send(`
-    <html>
-      <head>
-        <title>FridgeBuddy</title>
-      </head>
-      <body>
-        <h1>FridgeBuddy</h1>
-        <p>Add items via the terminal.</p>
-        <ul>${itemsHtml}</ul>
-      </body>
-    </html>
-  `);
-});
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  const idxInput = await askQuestion(
+    rl,
+    "Enter the number of the item to delete (leave empty to cancel): "
+  );
+  rl.close();
+
+  if (!idxInput) {
+    console.log("Deletion cancelled\n");
+    return;
+  }
+
+  const index = Number(idxInput) - 1;
+  if (index < 0 || index >= fridge.items.length) {
+    console.log("Invalid selection.\n");
+    return;
+  }
+
+  const removed = fridge.items.splice(index, 1)[0];
+  await writeFridge(fridge);
+  console.log(`Item ${removed.id} (${removed.name}) deleted.\n`);
+}
+
+async function promptActionCLI() {
+  while (true) {
+    const fridge = await readFridge();
+
+    if (!fridge.items.length) {
+      console.log("No items in fridge yet.\n");
+      await addItemCLI();
+      continue; // ask again after adding
+    }
+
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    const action = await askQuestion(
+      rl,
+      "Would you like to (a)dd, (d)elete an item, or (q)uit? (leave blank to quit): "
+    );
+    rl.close();
+
+    if (!action || action.toLowerCase().startsWith("q")) {
+      console.log("Exiting CLI prompts.\n");
+      break;
+    }
+
+    if (action.toLowerCase().startsWith("a")) {
+      await addItemCLI();
+    } else if (action.toLowerCase().startsWith("d")) {
+      await deleteItemCLI();
+    } else {
+      console.log("No valid action selected.\n");
+    }
+  }
+}
 
 /* ======================
    SERVER START
@@ -118,5 +169,5 @@ app.get("/", async (req, res) => {
 
 app.listen(PORT, async () => {
   console.log(`FridgeBuddy server running at http://localhost:${PORT}`);
-  await promptForItem();
+  await promptActionCLI();
 });
