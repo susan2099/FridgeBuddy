@@ -1,28 +1,34 @@
-const express = require("express");
-const fs = require("fs-extra");
-const yaml = require("js-yaml");
-const readline = require("readline");
+import express from 'express'
+import dotenv from 'dotenv'
+import fs from "fs-extra";
+import yaml from "js-yaml";
+import readline from "readline";
+
+import { createGeminiClient } from "./src/data/gemini/geminiClient.js";
+import { GeminiRecipeGenerator } from "./src/data/gemini/geminiRecipeGenerator.js";
+import { FridgeRepositoryYAML } from "./src/data/fridge/fridgeRepository.yaml.js";
+
+import { RecipeUseCase } from "./src/app/usecases/recipeUsecase.js";
+import { RecipeController } from "./src/interface/http/recipeController.js";
+import { buildRecipeRouter } from "./src/interface/http/recipeRoute.js";
+import { errorMiddleware } from "./src/interface/http/errorMiddleware.js";
+
+dotenv.config()
 
 const app = express();
-const PORT = 3000;
-const DATA_FILE = "./fridge.yaml"; // YAML storage file
-
-
-
-
 
 async function readFridge() {
   try {
-    const fileContents = await fs.readFile(DATA_FILE, "utf8");
-    return yaml.load(fileContents) || { items: [] };
+    const fileContents = await fs.readFile(process.env.DATA_FILE_PATH, "utf8");
+    return yaml.load(fileContents) || [];
   } catch (err) {
-    return { items: [] };
+    return [];
   }
 }
 
 async function writeFridge(data) {
   const yamlData = yaml.dump(data, { indent: 2 });
-  await fs.writeFile(DATA_FILE, yamlData);
+  await fs.writeFile(process.env.DATA_FILE_PATH, yamlData);
 }
 
 /* ======================
@@ -66,8 +72,8 @@ async function addItemCLI() {
   const fridge = await readFridge();
 
   // generate a simple numeric ID by taking the max existing id and adding 1
-  const nextId = fridge.items.length
-    ? Math.max(...fridge.items.map(i => i.id)) + 1
+  const nextId = fridge.length
+    ? Math.max(...fridge.map(i => i.id)) + 1
     : 1;
 
   const newItem = {
@@ -78,7 +84,7 @@ async function addItemCLI() {
     addedAt: new Date().toISOString()
   };
 
-  fridge.items.push(newItem);
+  fridge.push(newItem);
   await writeFridge(fridge);
 
   console.log("Item added:", newItem, "\n");
@@ -86,13 +92,13 @@ async function addItemCLI() {
 
 async function deleteItemCLI() {
   const fridge = await readFridge();
-  if (!fridge.items.length) {
+  if (!fridge.length) {
     console.log("No items to delete.\n");
     return;
   }
 
   console.log("\nCurrent fridge items:");
-  fridge.items.forEach((item, idx) => {
+  fridge.forEach((item, idx) => {
     console.log(
       `${idx + 1}) ${item.name} (qty ${item.quantity})${
         item.expiry ? ` exp ${item.expiry}` : ""
@@ -117,12 +123,12 @@ async function deleteItemCLI() {
   }
 
   const index = Number(idxInput) - 1;
-  if (index < 0 || index >= fridge.items.length) {
+  if (index < 0 || index >= fridge.length) {
     console.log("Invalid selection.\n");
     return;
   }
 
-  const removed = fridge.items.splice(index, 1)[0];
+  const removed = fridge.splice(index, 1)[0];
   await writeFridge(fridge);
   console.log(`Item ${removed.id} (${removed.name}) deleted.\n`);
 }
@@ -131,7 +137,7 @@ async function promptActionCLI() {
   while (true) {
     const fridge = await readFridge();
 
-    if (!fridge.items.length) {
+    if (!fridge.length) {
       console.log("No items in fridge yet.\n");
       await addItemCLI();
       continue; // ask again after adding
@@ -167,7 +173,33 @@ async function promptActionCLI() {
    SERVER START
 ====================== */
 
-app.listen(PORT, async () => {
-  console.log(`FridgeBuddy server running at http://localhost:${PORT}`);
+app.listen(process.env.CRUD_PORT, async () => {
+  console.log(`FridgeBuddy server running at http://localhost:${process.env.CRUD_PORT}`);
   await promptActionCLI();
+});
+
+async function recipeGeneratorBootstrap() {
+    const app = express();
+    app.use(express.json());
+
+    
+    const ai = createGeminiClient(process.env.GEMINI_API_KEY);
+    const recipeGenerator = new GeminiRecipeGenerator({ai});
+    const fridgeRepository = new FridgeRepositoryYAML({ filePath: process.env.DATA_FILE_PATH });
+    const recipeUseCase = new RecipeUseCase({ recipeGenerator, fridgeRepository });
+    const recipeController = new RecipeController({ recipeUseCase });
+    
+    app.use('/api', buildRecipeRouter(recipeController));
+    app.use(errorMiddleware);
+
+    const PORT = process.env.RECIPE_GENERATOR_PORT || 4000;
+
+    app.listen(PORT, () => {
+        console.log(`Recipe generator server is running on port ${PORT}`);
+    });
+}
+
+recipeGeneratorBootstrap().catch(err => {
+    console.error('Failed to start server:', err);
+    process.exit(1);
 });
