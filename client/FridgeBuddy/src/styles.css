@@ -30,12 +30,14 @@
   align-items: center;
   justify-content: center;
 
-  outline:2px solid black;
-
   z-index: 9999;
   background: white;
   padding: 20px;
   border-radius: 25px;
+}
+
+.outline {
+  outline:2px solid black;
 }
 
 .fit-content {

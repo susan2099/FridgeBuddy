@@ -39,7 +39,7 @@ export default function Fridge() {
 				</Link>
     		</div>
 
-			<div id="photoUploader" className="popup" style={{display:"none"}}>
+			<div id="photoUploader" className="popup outline" style={{display:"none"}}>
 				{photos.map((photo) => (
 					<img src={photo.webviewPath} style={{maxWidth:"90%", maxHeight:"70%", display:"block"}}></img>
 				))}
