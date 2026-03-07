@@ -32,3 +32,10 @@ client/FridgeBuddy/tsconfig.app.json
 client/FridgeBuddy/tsconfig.json
 client/FridgeBuddy/tsconfig.node.json
 client/FridgeBuddy/vite.config.ts
+
+node_modules/
+.env
+dist/
+coverage/
+.DS_Store
+.vscode/
