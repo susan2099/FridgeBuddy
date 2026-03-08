@@ -9,7 +9,8 @@ export default function Fridge() {
 	useEffect(
 		() => {
 			load_to_fridge();
-		}, []);
+		}, []
+	);
 
 	return (
 		<>
