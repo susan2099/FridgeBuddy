@@ -2,14 +2,17 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 function Recipes() {
-	const [options, setOptions] = useState("");
+	const [formData, setFormData] = useState({additionalOptions:""});
 
-	function handleChange(e:any) {
-		setOptions(e.target.value);
+	function handleChange(event:any) {
+		const { name, value } = event.target;
+		setFormData((prevFormData) => ({... prevFormData, [name]: value}));
 	}
 
-	function handleSubmit(e:any) {
-		e.preventDefault(); // stop form submission from reloading page
+	function handleSubmit(event:any) {
+		event.preventDefault(); // stop form submission from reloading page
+		// todo: send this to the Gemini recipe generator...
+		console.log(`Additional Options: ${formData.additionalOptions}`);
 	}
 
 	return (
@@ -18,10 +21,17 @@ function Recipes() {
 
 			<div>
 				<form id="additionalOptionsForm" onSubmit={handleSubmit}>
-					<label htmlFor="additionalOptions">Additional options</label>
-					<input type="" id="additionalOptions" placeholder="What are you hungry for today?" onChange={handleChange}></input><br />
+					<label htmlFor="additionalOptions" style={{textAlign:"left"}}>Additional options</label><br/>
+					<textarea 	id="additionalOptions" 
+								name="additionalOptions" 
+								value={formData.additionalOptions}
+								placeholder="What are you hungry for today?" 
+								onChange={handleChange}
+								style={{width:"80vw", height:"20vh"}}>
+					</textarea><br />
 
-					<input type="submit">Get a recipe!</input>
+					<input type="submit" value="Get a recipe!" className="button"></input>
+					{/* <button type="submit">Get a recipe!</button> */}
 				</form>
 
 				<Link to="/">

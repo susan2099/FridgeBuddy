@@ -39,8 +39,3 @@ export interface UserPhoto {
 	filepath: string;
 	webviewPath?: string;
 }
-
-export function toggleImage() {
-	const imageContainer = document.getElementById("photoUploader") as HTMLDivElement;
-	imageContainer.style.display = (imageContainer.style.display == "none") ? "flex" : "none";
-}

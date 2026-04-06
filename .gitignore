@@ -33,6 +33,8 @@ client/FridgeBuddy/tsconfig.json
 client/FridgeBuddy/tsconfig.node.json
 client/FridgeBuddy/vite.config.ts
 
+client/FridgeBuddy/src/scripts/test.ts
+
 node_modules/
 .env
 dist/
