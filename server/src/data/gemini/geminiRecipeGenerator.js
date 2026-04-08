@@ -16,7 +16,7 @@ export class GeminiRecipeGenerator extends RecipeGenerator {
         this.maxAttempts = maxAttempts;
     }
 
-    async generate({dish, servings, filteredFridgeItems, avoidAllergens}) {
+    async generate({dish, servings, ingredients, avoidAllergens, preferences}) {
         if (!dish || !dish.trim()) {
             throw new Error('Dish name is required');
         }
@@ -51,7 +51,7 @@ export class GeminiRecipeGenerator extends RecipeGenerator {
                 const { name, args } = functionCallPart.functionCall;
                 if (name === "get_fridge_items") {
                     const toolResult = {
-                        items: filteredFridgeItems,
+                        items: ingredients,
                         note: "Each item includes allergens list. You MUST check allergens before using."
                     };
                     contents.push({
@@ -85,7 +85,7 @@ export class GeminiRecipeGenerator extends RecipeGenerator {
     }
 }
 
-function buildRecipePrompt({ dish, servings, avoidAllergens = [] }) {
+function buildRecipePrompt({ dish, servings, avoidAllergens = [], preferences = [] }) {
     const systemInstruction = `
 You are a strict recipe generation engine.
 
@@ -122,6 +122,13 @@ as long as they do NOT violate the user's allergies and fit the user's needs.
 
 ===============================================================
 
+Preferences:
+- The user may provide cooking or dietary preferences.
+- You SHOULD follow these preferences as much as reasonably possible.
+- However, preferences are LOWER priority than allergy safety and ingredient feasibility.
+- If a preference conflicts with allergy safety, the requested dish, or feasible cooking logic,
+you MUST prioritize safety and reasonable recipe generation.
+
 General behavior:
 - Prefer using fridge items.
 - You may add common pantry items if needed.
@@ -135,9 +142,15 @@ Servings: ${servings}
 User Allergies (STRICTLY FORBIDDEN):
 ${avoidAllergens.length ? avoidAllergens.join(", ") : "None"}
 
+User Preferences:
+${preferences.length ? preferences.join(", ") : "None"}
+
 You must generate a safe recipe.
 Do not include any forbidden allergen.
 If an ingredient is commonly known to contain a forbidden allergen, avoid it even if not labeled.
+
+Follow the user's preferences as much as reasonably possible,
+but never violate allergy safety or basic recipe feasibility.
 
 You may call get_fridge_items to inspect available ingredients.
 

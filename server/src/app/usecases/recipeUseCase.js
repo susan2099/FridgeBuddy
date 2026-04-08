@@ -17,7 +17,7 @@ export class RecipeUseCase {
         this.#recipeGenerator = recipeGenerator;
     }
 
-    async generate({ dish, servings, avoidAllergens }) {
+    async generate({ dish, servings = 1, ingredients = [], avoidAllergens = [], preferences = [] }) {
         if (!dish || !dish.trim()) {
             throw new Error('Dish name is required');
         }
@@ -28,13 +28,14 @@ export class RecipeUseCase {
             throw new Error('Avoid allergens must be an array');
         }
 
-        const fridgeItems = await this.#fridgeRepository.getFridgeItems();
-        const filteredFridgeItems = filterAllergenViolations({ fridgeItems, avoidAllergens });
+        // const fridgeItems = await this.#fridgeRepository.getFridgeItems();
+        // const filteredFridgeItems = filterAllergenViolations({ fridgeItems, avoidAllergens });
         const recipe = await this.#recipeGenerator.generate({
             dish,
             servings,
-            filteredFridgeItems,
+            ingredients,
             avoidAllergens,
+            preferences
         });
 
 
