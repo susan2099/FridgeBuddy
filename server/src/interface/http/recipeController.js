@@ -1,4 +1,4 @@
-import { InsufficientIngredientsError } from "../../domain/errors.js";
+import { parseGenerateRecipeInput } from '../../app/usecases/generateRecipeInput.js';
 
 export class RecipeController {
     constructor( {recipeUseCase} ) {
@@ -11,8 +11,8 @@ export class RecipeController {
 
     async generateRecipe(req, res, next) {
         try {
-            const { dish, servings, avoidAllergens } = req.body ?? {};
-            const result = await this.recipeUseCase.generate( {dish, servings, avoidAllergens} );
+            const input = parseGenerateRecipeInput(req.body ?? {});
+            const result = await this.recipeUseCase.generate(input);
             res.status(200).json(result);
         } catch (error) {
             next(error);
