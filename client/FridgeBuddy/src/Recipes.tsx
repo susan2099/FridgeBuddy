@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { request_recipe } from './scripts/RecipeManager';
+
 function Recipes() {
 	const [formData, setFormData] = useState({additionalOptions:""});
 
@@ -11,8 +13,7 @@ function Recipes() {
 
 	function handleSubmit(event:any) {
 		event.preventDefault(); // stop form submission from reloading page
-		// todo: send this to the Gemini recipe generator...
-		console.log(`Additional Options: ${formData.additionalOptions}`);
+		request_recipe(formData.additionalOptions);
 	}
 
 	return (

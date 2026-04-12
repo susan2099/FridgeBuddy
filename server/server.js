@@ -13,6 +13,8 @@ import { RecipeController } from "./src/interface/http/recipeController.js";
 import { buildRecipeRouter } from "./src/interface/http/recipeRoute.js";
 import { errorMiddleware } from "./src/interface/http/errorMiddleware.js";
 
+import cors from 'cors';
+
 dotenv.config()
 
 const app = express();
@@ -181,6 +183,7 @@ app.listen(process.env.CRUD_PORT, async () => {
 async function recipeGeneratorBootstrap() {
     const app = express();
     app.use(express.json());
+    app.use(cors());
 
     
     const ai = createGeminiClient(process.env.GEMINI_API_KEY);

@@ -57,6 +57,34 @@ export async function load_to_fridge() {
 	close_db(db);
 }
 
+export async function load_fridge_data() {
+	const db: IDBDatabase = await open_db(CONSTS.FRIDGE_DB, [CONSTS.FRIDGE_TABLE]);
+	const ingredients = [] as Array<string>;
+
+	return new Promise<Array<string> | boolean>(
+		(resolve) => {
+			const request = db.transaction(CONSTS.FRIDGE_TABLE, "readonly").objectStore(CONSTS.FRIDGE_TABLE).openCursor();
+
+			request.onsuccess = function() { // runs once for each item in database
+				// write updated rows to table
+				const cursor = request.result;
+				if(cursor) {
+					const data:Record<string, any> = cursor.value;
+					ingredients.push(data[CONSTS.FRIDGE_ITEM_NAME_COLUMN]);
+					
+					cursor.continue();
+				} else {
+					resolve(ingredients);
+				}
+			}
+
+			request.onerror = function() {
+				resolve(false);
+			}
+		}
+	);
+}
+
 export async function T_save_and_load() {
 	await save_yaml_to_db(`# TESTING PURPOSES ONLY!
 items:
