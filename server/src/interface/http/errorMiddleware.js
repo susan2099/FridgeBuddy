@@ -1,21 +1,20 @@
 import { ZodError} from 'zod';
-import { InsufficientIngredientsError } from '../../domain/errors.js';
+import { AppError } from '../../domain/errors.js';
+import { failure } from './responseFormatter.js';
 
-function sendError(res, status, code, message, details) {
-    const payload = { error: { code, message } };
-    if (details) {
-        payload.error.details = details;
-    }
-    return res.status(status).json(payload);
+function sendError(res, status = 500, code, message, details) {
+    return res.status(status).json(failure({ code, message, details }));
 }
 
 export function errorMiddleware(err, req, res, next) {
+    if (err instanceof AppError) {
+        return sendError(res, err.status, err.code, err.message, err.details);
+    }
     if (err instanceof ZodError) {
         return sendError(res, 400, 'VALIDATION_ERROR', 'Invalid request data', err.errors);
     }
-    if (err instanceof InsufficientIngredientsError) {
-        return sendError(res, 400, 'INSUFFICIENT_INGREDIENTS', err.message, null);
+    if (err instanceof Error) {
+        return sendError(res, err.status, 'INTERNAL_SERVER_ERROR', err.message, null);
     }
-    console.error('Unexpected error:', err);
     return sendError(res, 500, 'INTERNAL_SERVER_ERROR', 'An unexpected error occurred', null);
 }

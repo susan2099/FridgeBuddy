@@ -26,7 +26,7 @@ export class GeminiRecipeGenerator extends RecipeGenerator {
         if (!Array.isArray(avoidAllergens)) {
             throw new Error('Avoid allergens must be an array');
         }
-        const prompt = buildRecipePrompt({ dish, servings, avoidAllergens });
+        const prompt = buildRecipePrompt({ dish, servings, avoidAllergens, preferences });
         let contents =[{ "role": "user", parts: [{ text: prompt.userPrompt }] }];
 
         for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {

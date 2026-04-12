@@ -10,7 +10,7 @@ export function containsAllergens({ ingredient, avoidAllergens }) {
 export function assertNoAllergenViolations({ ingredients, avoidAllergens }) {
     for (const ingredient of ingredients) {
         if (containsAllergens({ ingredient, avoidAllergens })) {
-            throw new AllergenViolationError('Recipe contains ingredients with forbidden allergens');
+            throw new AllergenViolationError('Violation of allergen restrictions detected in generated recipe.', { details: { ingredient, avoidAllergens } });
         }
     }
 }

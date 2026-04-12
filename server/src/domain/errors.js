@@ -1,15 +1,22 @@
-export class AllergenViolationError extends Error {
-    constructor(message) {
+export class AppError extends Error {
+    constructor(message, { code = "APP_ERROR", details = null, status = 500 } = {}) {
         super(message);
-        this.name = 'AllergenViolationError';
-        this.code = 'ALLERGEN_VIOLATION';
+        this.name = this.constructor.name;
+        this.code = code;
+        this.details = details;
+        this.status = status;
     }
 }
 
-export class InsufficientIngredientsError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'InsufficientIngredientsError';
-        this.code = 'INSUFFICIENT_INGREDIENTS';
+export class AllergenViolationError extends AppError {
+    constructor({ message = 'The generated recipe contains ingredients that violate the specified allergen restrictions.', details = null } = {}) {
+        super(message, { code: 'ALLERGEN_VIOLATION', details, status: 400 });
+    }
+}
+
+export class InsufficientIngredientsError extends AppError {
+    constructor({ message = 'Not enough ingredients available to generate the requested recipe.\n' +
+            'The generated recipe as a reference includes ingredients that are not available in the fridge.', details = null } = {}) {
+        super(message, { code: 'INSUFFICIENT_INGREDIENTS', details, status: 400 });
     }
 }
