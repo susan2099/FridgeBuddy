@@ -21,14 +21,38 @@
   left: 50%;
   transform: translate(-50%, -50%);
 
-  width:70vw;
-  height:60vh;
+  max-width:70vw;
+  min-height:30vh;
+  max-height:60vh;
 
   flex-direction:column;
 
   /* place-content:center; */
   align-items: center;
   justify-content: center;
+
+  z-index: 9999;
+  background: var(--bg-color);
+  padding: 20px;
+  border-radius: 25px;
+}
+
+.recipe_panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width:70vw;
+  height:60vh;
+  max-height: 60vh;
+
+  overflow-y: auto;
+
+  flex-direction:column;
+
+  align-items: center;
+  justify-content: flex-start;
 
   z-index: 9999;
   background: var(--bg-color);

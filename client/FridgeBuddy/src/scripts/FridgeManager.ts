@@ -1,6 +1,9 @@
 import * as CONSTS from './CONSTS';
 import { open_db, close_db, save_yaml_to_db } from './DBManager';
 
+// temp
+import { type fridgeIngredient } from '../Fridge';
+
 // table should be tbody element!
 async function write_table(db:IDBDatabase, table:HTMLTableSectionElement, table_name:string, cells:Array<string>) : Promise<HTMLTableSectionElement | boolean> {
 	table.innerHTML = ""; // clear old rows
@@ -83,6 +86,21 @@ export async function load_fridge_data() {
 			}
 		}
 	);
+}
+
+export async function save_to_fridge(items:Array<fridgeIngredient>) {
+	let yaml = "items:\n";
+	for(let i = 0; i < items.length; i++) {
+		const now = Date.now();
+		yaml += `  - id: ${now}\n`;
+		yaml += `    name: ${items[i]["name"]}\n`;
+		yaml += `    quantity: ${items[i]["quantity"]}\n`;
+		yaml += `    expiry: ${items[i]["expiry"]}\n`;
+		yaml += `    addedAt: ${now}\n`;
+	}
+
+	save_yaml_to_db(yaml, CONSTS.FRIDGE_YAML_TABLE, CONSTS.FRIDGE_DB, CONSTS.FRIDGE_TABLE);
+	await load_to_fridge();
 }
 
 export async function T_save_and_load() {
