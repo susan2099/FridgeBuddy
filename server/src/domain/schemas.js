@@ -1,5 +1,4 @@
 import z from "zod";
-import { id } from "zod/v4/locales";
 
 /** ----- Fridge ----- */
 
@@ -33,4 +32,5 @@ export const RecipeSchema = z.object({
   ingredients: z.array(IngredientSchema).min(1),
   instructions: z.array(z.string().min(1)).min(1),
   is_success: z.boolean(),
+  failure_reason: z.string().nullable().default(null),
 });

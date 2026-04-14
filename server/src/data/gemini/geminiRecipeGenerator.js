@@ -26,7 +26,7 @@ export class GeminiRecipeGenerator extends RecipeGenerator {
         if (!Array.isArray(avoidAllergens)) {
             throw new Error('Avoid allergens must be an array');
         }
-        const prompt = buildRecipePrompt({ dish, servings, avoidAllergens, preferences });
+        const prompt = buildRecipePrompt({ dish, servings, ingredients, avoidAllergens, preferences });
         let contents =[{ "role": "user", parts: [{ text: prompt.userPrompt }] }];
 
         for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {
@@ -49,27 +49,7 @@ export class GeminiRecipeGenerator extends RecipeGenerator {
                 }
 
                 const { name, args } = functionCallPart.functionCall;
-                if (name === "get_fridge_items") {
-                    const toolResult = {
-                        items: ingredients,
-                        note: "Each item includes allergens list. You MUST check allergens before using."
-                    };
-                    contents.push({
-                        role: "model",
-                        parts: [functionCallPart],
-                    });
-                    contents.push({
-                        role: "user",
-                        parts: [
-                            {
-                                functionResponse: {
-                                    name: "get_fridge_items",
-                                    response: toolResult,
-                                },
-                            },
-                        ],
-                    });
-                } else if (name === "emit_recipe") {
+                if (name === "emit_recipe") {
                     const recipe = RecipeSchema.parse(args);
                     return recipe;
                 } else {
@@ -85,77 +65,52 @@ export class GeminiRecipeGenerator extends RecipeGenerator {
     }
 }
 
-function buildRecipePrompt({ dish, servings, avoidAllergens = [], preferences = [] }) {
+function buildRecipePrompt({ dish, servings, ingredients = [], avoidAllergens = [], preferences = [] }) {
+    const ingredientsList = ingredients.length
+        ? ingredients.map(i => `- ${i}`).join("\n")
+        : "No available ingredients provided.";
     const systemInstruction = `
-You are a strict recipe generation engine.
+You generate recipes and may respond ONLY by calling the tool "emit_recipe".
 
-================ HARD CONSTRAINTS (MUST FOLLOW) ================
-The user has food allergies. You MUST NEVER include any ingredient
-that contains the following allergens:
+Priority order:
+1. Allergy safety
+2. Follow user preferences
+3. Use given ingredients
+4. Keep the recipe reasonable for the requested dish
 
-${avoidAllergens.length ? avoidAllergens.join(", ") : "NONE"}
+Rules:
+- Use the given ingredients to generate the recipe.
+- Basic pantry items such as salt, sugar, oil, pepper, and water may be used without listing them as extra ingredients.
+- Avoid any ingredient that contains or is commonly associated with the user's allergens, even if not explicitly labeled.
+- Follow the user's preferences as much as possible.
 
-This is a SAFETY CRITICAL requirement.
-If an ingredient contains or may contain these allergens,
-you MUST replace it with a safe alternative.
+Success rule:
+- If the recipe can be made with the given ingredients plus basic pantry items, set is_success=true.
+- If any non-given ingredient beyond basic pantry items is required, you may still generate the recipe, but you MUST:
+  - minimize added ingredients
+  - set is_success=false
+  - write the reason in failure_reason
 
-Even if an ingredient is NOT explicitly labeled as containing an allergen in the provided data,
-if it is commonly known or strongly implied to contain (or frequently contain) any forbidden allergen,
-you MUST assume it does and avoid it.
-
-You are NOT allowed to:
-- Suggest the ingredient anyway
-- Mention it as optional
-- Use it in garnish/sauce
-- Use derived products
-
-You MUST:
-- Substitute with safe alternatives
-- Ensure the final recipe is completely allergen-free
-
-Feasibility & success flag:
-- Prefer using fridge items.
-- If the requested dish cannot be reasonably made using available items and safe substitutes,
-you MAY introduce additional ingredients that are not listed in the provided data,
-as long as they do NOT violate the user's allergies and fit the user's needs.
-- In that case, you MUST set is_success = false in the emitted recipe object.
-
-===============================================================
-
-Preferences:
-- The user may provide cooking or dietary preferences.
-- You SHOULD follow these preferences as much as reasonably possible.
-- However, preferences are LOWER priority than allergy safety and ingredient feasibility.
-- If a preference conflicts with allergy safety, the requested dish, or feasible cooking logic,
-you MUST prioritize safety and reasonable recipe generation.
-
-General behavior:
-- Prefer using fridge items.
-- You may add common pantry items if needed.
-- Output ONLY via the tool "emit_recipe".
+Forbidden:
+- Never use ingredients containing the user's allergens.
+- Never set is_success=true when using non-given ingredients beyond basic pantry items.
+- Never leave failure_reason empty when is_success=false.
 `;
 
-  const userPrompt = `
+    const userPrompt = `
 Requested dish: "${dish}"
 Servings: ${servings}
 
-User Allergies (STRICTLY FORBIDDEN):
+Available ingredients:
+${ingredientsList}
+
+User allergens:
 ${avoidAllergens.length ? avoidAllergens.join(", ") : "None"}
 
-User Preferences:
+User preferences:
 ${preferences.length ? preferences.join(", ") : "None"}
 
-You must generate a safe recipe.
-Do not include any forbidden allergen.
-If an ingredient is commonly known to contain a forbidden allergen, avoid it even if not labeled.
-
-Follow the user's preferences as much as reasonably possible,
-but never violate allergy safety or basic recipe feasibility.
-
-You may call get_fridge_items to inspect available ingredients.
-
-If you cannot reasonably make the requested dish with available items and safe substitutes,
-you may add extra safe ingredients not listed in the data, but set is_success=false.
+Generate one recipe now.
 `;
     return { systemInstruction, userPrompt };
 }
