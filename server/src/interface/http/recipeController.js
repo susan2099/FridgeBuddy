@@ -1,3 +1,4 @@
+import { success } from './responseFormatter.js';
 import { parseGenerateRecipeInput } from '../../app/usecases/generateRecipeInput.js';
 
 export class RecipeController {
@@ -13,7 +14,7 @@ export class RecipeController {
         try {
             const input = parseGenerateRecipeInput(req.body ?? {});
             const result = await this.recipeUseCase.generate(input);
-            res.status(200).json(result);
+            res.status(200).json(success(result));
         } catch (error) {
             next(error);
         }

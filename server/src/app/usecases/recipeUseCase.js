@@ -40,7 +40,7 @@ export class RecipeUseCase {
 
 
         if (!recipe.is_success) {
-            throw new InsufficientIngredientsError('Failed to generate a recipe with the given parameters. Try adjusting your inputs.');
+            throw new InsufficientIngredientsError({ details: recipe });
         }
 
         return recipe;
