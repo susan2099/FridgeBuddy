@@ -1,7 +1,5 @@
 import { RecipeGenerator } from "../../app/ports/RecipeGenerator.js";
-import { FridgeRepository } from "../../app/ports/FridgeRepository.js";
 import { recipeTools } from "./tools.js";
-import { filterAllergenViolations } from "../../domain/allergenGuards.js";
 import { RecipeSchema } from "../../domain/schemas.js";
 
 export class GeminiRecipeGenerator extends RecipeGenerator {
@@ -58,7 +56,7 @@ export class GeminiRecipeGenerator extends RecipeGenerator {
             } catch (error) {
                 console.error(`Attempt ${attempt} failed:`, error);
                 if (attempt === this.maxAttempts) {
-                    throw new Error("Failed to generate recipe after multiple attempts. Last error: " + error.message);
+                    throw new Error("Failed to generate recipe after multiple attempts. Last error: " + error.message, { cause: error });
                 }
             }
         }

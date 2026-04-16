@@ -1,5 +1,5 @@
 export class FridgeRepository {
-    async getFridgeItems(_params={}) {
-        throw new Error('FridgeRepository.getFridgeItems() not implemented');
-    }
+    async add() {
+        throw new Error("FridgeRepository.add() must be implemented");
+    } 
 }

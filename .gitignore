@@ -41,3 +41,5 @@ dist/
 coverage/
 .DS_Store
 .vscode/
+
+config/

@@ -1,5 +1,5 @@
 export class RecipeGenerator {
-    async generate({dish, servings, filteredFridgeItems, avoidAllergens}) {
+    async generate() {
         throw new Error('RecipeGenerator.generate() not implemented');
     }
 }

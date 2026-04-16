@@ -1,5 +1,5 @@
-import { success } from './responseFormatter.js';
-import { parseGenerateRecipeInput } from '../../app/usecases/generateRecipeInput.js';
+import { success } from '../responseFormatter.js';
+import { parseGenerateRecipeInput } from '../../app/usecases/recipe/generateRecipeInput.js';
 
 export class RecipeController {
     constructor( {recipeUseCase} ) {

@@ -3,15 +3,19 @@ import dotenv from 'dotenv'
 import fs from "fs-extra";
 import yaml from "js-yaml";
 import readline from "readline";
+import process from 'node:process';
 
 import { createGeminiClient } from "./src/data/gemini/geminiClient.js";
-import { GeminiRecipeGenerator } from "./src/data/gemini/geminiRecipeGenerator.js";
-import { FridgeRepositoryYAML } from "./src/data/fridge/fridgeRepository.yaml.js";
+import { GeminiRecipeGenerator } from "./src/data/gemini/GeminiRecipeGenerator.js";
 
-import { RecipeUseCase } from "./src/app/usecases/recipeUsecase.js";
-import { RecipeController } from "./src/interface/http/recipeController.js";
-import { buildRecipeRouter } from "./src/interface/http/recipeRoute.js";
-import { errorMiddleware } from "./src/interface/http/errorMiddleware.js";
+import { RecipeUseCase } from "./src/app/usecases/recipe/RecipeUsecase.js";
+import { RecipeController } from "./src/interface/controllers/RecipeController.js";
+import { buildRecipeRouter } from "./src/interface/routes/recipeRoute.js";
+import { FsFridgeRepository } from './src/data/fridge/FsFridgeRepository.js';
+import { AddFridgeItemUseCase } from "./src/app/usecases/fridge/AddFridgeItemUseCase.js";
+import { FridgeController } from "./src/interface/controllers/FridgeController.js";
+import { buildFridgeRouter } from "./src/interface/routes/fridgeRoute.js";
+import { errorMiddleware } from "./src/interface/errorMiddleware.js";
 
 import cors from 'cors';
 
@@ -23,7 +27,8 @@ async function readFridge() {
   try {
     const fileContents = await fs.readFile(process.env.DATA_FILE_PATH, "utf8");
     return yaml.load(fileContents) || [];
-  } catch (err) {
+  } catch (error) {
+    console.error("Error reading fridge data:", error);
     return [];
   }
 }
@@ -180,29 +185,34 @@ app.listen(process.env.CRUD_PORT, async () => {
   await promptActionCLI();
 });
 
-async function recipeGeneratorBootstrap() {
+async function fridgeBuddyBootstrap() {
     const app = express();
     app.use(express.json());
     app.use(cors());
 
-    
+    // Recipe generator setup
     const ai = createGeminiClient(process.env.GEMINI_API_KEY);
     const recipeGenerator = new GeminiRecipeGenerator({ai});
-    const fridgeRepository = new FridgeRepositoryYAML({ filePath: process.env.DATA_FILE_PATH });
-    const recipeUseCase = new RecipeUseCase({ recipeGenerator, fridgeRepository });
+    const recipeUseCase = new RecipeUseCase({ recipeGenerator });
     const recipeController = new RecipeController({ recipeUseCase });
     
+    // Fridge CRUD setup
+    const fridgeRepository = new FsFridgeRepository();
+    const addFridgeItemUseCase = new AddFridgeItemUseCase({ fridgeRepository });
+    const fridgeController = new FridgeController({ addFridgeItemUseCase });
+
     app.use('/api', buildRecipeRouter(recipeController));
+    app.use('/api/fridge', buildFridgeRouter(fridgeController));
     app.use(errorMiddleware);
 
     const PORT = process.env.RECIPE_GENERATOR_PORT || 4000;
 
     app.listen(PORT, () => {
-        console.log(`Recipe generator server is running on port ${PORT}`);
+        console.log(`API server is running on port ${PORT}`);
     });
 }
 
-recipeGeneratorBootstrap().catch(err => {
+fridgeBuddyBootstrap().catch(err => {
     console.error('Failed to start server:', err);
     process.exit(1);
 });
