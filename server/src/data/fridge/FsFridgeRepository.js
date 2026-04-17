@@ -24,4 +24,28 @@ export class FsFridgeRepository extends FridgeRepository {
             ...payload
         })
     }
+
+    async getAllByUserId(userId) {
+        const snapshot = await db
+            .collection('users')
+            .doc(userId)
+            .collection('items')
+            .orderBy('createdAt', 'desc')
+            .get();
+
+        const items = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return new FridgeItem({
+                id: doc.id,
+                userId,
+                name: data.name,
+                quantity: data.quantity,
+                unit: data.unit,
+                expiry: data.expiry,
+                allergens: data.allergens,
+                createdAt: data.createdAt
+            });
+        });
+        return items;
+    }
 }
