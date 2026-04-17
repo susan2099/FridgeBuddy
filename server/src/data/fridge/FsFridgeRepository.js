@@ -10,7 +10,7 @@ export class FsFridgeRepository extends FridgeRepository {
             unit: item.unit ?? null,
             expiry: item.expiry ?? null,
             allergens: item.allergens ?? [],
-            createdAt: item.createdAt ?? new Date().toISOString()
+            createdAt: item.createdAt ?? new Date()
         }
         const docRef = await db
             .collection('users')
@@ -23,5 +23,29 @@ export class FsFridgeRepository extends FridgeRepository {
             userId: item.userId,
             ...payload
         })
+    }
+
+    async getAllByUserId(userId) {
+        const snapshot = await db
+            .collection('users')
+            .doc(userId)
+            .collection('items')
+            .orderBy('createdAt', 'desc')
+            .get();
+
+        const items = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return new FridgeItem({
+                id: doc.id,
+                userId,
+                name: data.name,
+                quantity: data.quantity,
+                unit: data.unit,
+                expiry: data.expiry,
+                allergens: data.allergens,
+                createdAt: data.createdAt
+            });
+        });
+        return items;
     }
 }
