@@ -7,6 +7,6 @@ export class FridgeItem {
         this.unit = unit;
         this.expiry = expiry;
         this.allergens = allergens;
-        this.createdAt = createdAt instanceof Date ? createdAt : new Date(createdAt);
+        this.createdAt = createdAt?.toDate?.() ?? (createdAt ? new Date(createdAt) : null);
     }
 }

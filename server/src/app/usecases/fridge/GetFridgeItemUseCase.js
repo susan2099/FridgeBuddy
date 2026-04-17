@@ -1,11 +1,11 @@
-import { ValidationError } from '../../errors/ValidationError.js';
+import { ValidationError } from '../../errors.js';
 
 export class GetFridgeItemUseCase {
     constructor({ fridgeRepository }) {
         this.fridgeRepository = fridgeRepository;
     }
 
-    async execute({userId}) {
+    async execute({ userId }) {
         if (!userId) {
             throw new ValidationError({ message: 'User ID is required', details: { field: 'userId' } });
         }

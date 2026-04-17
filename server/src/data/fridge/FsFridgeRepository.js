@@ -10,7 +10,7 @@ export class FsFridgeRepository extends FridgeRepository {
             unit: item.unit ?? null,
             expiry: item.expiry ?? null,
             allergens: item.allergens ?? [],
-            createdAt: item.createdAt ?? new Date().toISOString()
+            createdAt: item.createdAt ?? new Date()
         }
         const docRef = await db
             .collection('users')
