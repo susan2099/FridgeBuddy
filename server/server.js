@@ -8,7 +8,7 @@ import process from 'node:process';
 import { createGeminiClient } from "./src/data/gemini/geminiClient.js";
 import { GeminiRecipeGenerator } from "./src/data/gemini/GeminiRecipeGenerator.js";
 
-import { RecipeUseCase } from "./src/app/usecases/recipe/RecipeUsecase.js";
+import { RecipeUseCase } from "./src/app/usecases/recipe/RecipeUseCase.js";
 import { RecipeController } from "./src/interface/controllers/RecipeController.js";
 import { buildRecipeRouter } from "./src/interface/routes/recipeRoute.js";
 import { FsFridgeRepository } from './src/data/fridge/FsFridgeRepository.js';
