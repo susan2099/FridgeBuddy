@@ -1,4 +1,5 @@
 import { InsufficientIngredientsError } from "../../../domain/errors.js";
+import { ValidationError } from "../../errors.js";
 
 export class RecipeUseCase {
     #recipeGenerator;
@@ -12,13 +13,13 @@ export class RecipeUseCase {
 
     async generate({ dish, servings = 1, ingredients = [], avoidAllergens = [], preferences = [] }) {
         if (!dish || !dish.trim()) {
-            throw new Error('Dish name is required');
+            throw new ValidationError({ message: 'Dish name is required', details: { field: 'dish' } });
         }
         if (!Number.isFinite(servings) || servings <= 0) {
-            throw new Error('Servings must be a positive number');
+            throw new ValidationError({ message: 'Servings must be a positive number', details: { field: 'servings' } });
         }
         if (!Array.isArray(avoidAllergens)) {
-            throw new Error('Avoid allergens must be an array');
+            throw new ValidationError({ message: 'Avoid allergens must be an array', details: { field: 'avoidAllergens' } });
         }
 
         const recipe = await this.#recipeGenerator.generate({
