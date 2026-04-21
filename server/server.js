@@ -18,6 +18,10 @@ import { UpdateFridgeItemUseCase } from "./src/app/usecases/fridge/UpdateFridgeI
 import { DeleteFridgeItemUseCase } from "./src/app/usecases/fridge/DeleteFridgeItemUseCase.js";
 import { FridgeController } from "./src/interface/controllers/FridgeController.js";
 import { buildFridgeRouter } from "./src/interface/routes/fridgeRoute.js";
+import { OffRepository } from "./src/data/openFoodFact/OffRepository.js";
+import { BarcodeScannerUseCase } from "./src/app/usecases/scanner/BarcodeScannerUseCase.js";
+import { ScannerController } from "./src/interface/controllers/ScannerController.js";
+import { buildScannerRouter } from "./src/interface/routes/scannerRoute.js";
 import { errorMiddleware } from "./src/interface/errorMiddleware.js";
 
 import cors from 'cors';
@@ -212,8 +216,14 @@ async function fridgeBuddyBootstrap() {
         deleteFridgeItemUseCase
     });
 
+    // Scanner setup
+    const barcodeRepository = new OffRepository();
+    const barcodeScannerUseCase = new BarcodeScannerUseCase({ barcodeRepository });
+    const scannerController = new ScannerController({ barcodeScannerUseCase });
+
     app.use('/api', buildRecipeRouter(recipeController));
     app.use('/api/fridge', buildFridgeRouter(fridgeController));
+    app.use('/api/scanner', buildScannerRouter(scannerController));
     app.use(errorMiddleware);
 
     const PORT = process.env.RECIPE_GENERATOR_PORT || 4000;

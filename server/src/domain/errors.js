@@ -20,3 +20,9 @@ export class InsufficientIngredientsError extends AppError {
         super(message, { code: 'INSUFFICIENT_INGREDIENTS', details, status: 400 });
     }
 }
+
+export class ProductNotFoundError extends AppError {
+    constructor({ message = 'The specified product was not found in the database.', details = null } = {}) {
+        super(message, { code: 'PRODUCT_NOT_FOUND', details, status: 404 });
+    }
+}
