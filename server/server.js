@@ -14,6 +14,8 @@ import { buildRecipeRouter } from "./src/interface/routes/recipeRoute.js";
 import { FsFridgeRepository } from './src/data/fridge/FsFridgeRepository.js';
 import { AddFridgeItemUseCase } from "./src/app/usecases/fridge/AddFridgeItemUseCase.js";
 import { GetFridgeItemUseCase } from "./src/app/usecases/fridge/GetFridgeItemUseCase.js";
+import { UpdateFridgeItemUseCase } from "./src/app/usecases/fridge/UpdateFridgeItemUseCase.js";
+import { DeleteFridgeItemUseCase } from "./src/app/usecases/fridge/DeleteFridgeItemUseCase.js";
 import { FridgeController } from "./src/interface/controllers/FridgeController.js";
 import { buildFridgeRouter } from "./src/interface/routes/fridgeRoute.js";
 import { errorMiddleware } from "./src/interface/errorMiddleware.js";
@@ -201,7 +203,14 @@ async function fridgeBuddyBootstrap() {
     const fridgeRepository = new FsFridgeRepository();
     const addFridgeItemUseCase = new AddFridgeItemUseCase({ fridgeRepository });
     const getFridgeItemUseCase = new GetFridgeItemUseCase({ fridgeRepository });
-    const fridgeController = new FridgeController({ addFridgeItemUseCase, getFridgeItemUseCase });
+    const updateFridgeItemUseCase = new UpdateFridgeItemUseCase({ fridgeRepository });
+    const deleteFridgeItemUseCase = new DeleteFridgeItemUseCase({ fridgeRepository });
+    const fridgeController = new FridgeController({
+        addFridgeItemUseCase,
+        getFridgeItemUseCase,
+        updateFridgeItemUseCase,
+        deleteFridgeItemUseCase
+    });
 
     app.use('/api', buildRecipeRouter(recipeController));
     app.use('/api/fridge', buildFridgeRouter(fridgeController));
