@@ -26,3 +26,9 @@ export class ProductNotFoundError extends AppError {
         super(message, { code: 'PRODUCT_NOT_FOUND', details, status: 404 });
     }
 }
+
+export class OCRProcessingError extends AppError {
+    constructor({ message = 'An error occurred while processing the receipt image with OCR.', details = null } = {}) {
+        super(message, { code: 'OCR_PROCESSING_ERROR', details, status: 500 });
+    }
+}

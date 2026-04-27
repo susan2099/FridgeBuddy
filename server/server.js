@@ -19,7 +19,9 @@ import { DeleteFridgeItemUseCase } from "./src/app/usecases/fridge/DeleteFridgeI
 import { FridgeController } from "./src/interface/controllers/FridgeController.js";
 import { buildFridgeRouter } from "./src/interface/routes/fridgeRoute.js";
 import { OffRepository } from "./src/data/openFoodFact/OffRepository.js";
+import { TabScannerRepository } from "./src/data/tabscanner/TabScannerRepository.js";
 import { BarcodeScannerUseCase } from "./src/app/usecases/scanner/BarcodeScannerUseCase.js";
+import { ReceiptScannerUseCase } from "./src/app/usecases/scanner/ReceiptScannerUseCase.js";
 import { ScannerController } from "./src/interface/controllers/ScannerController.js";
 import { buildScannerRouter } from "./src/interface/routes/scannerRoute.js";
 import { errorMiddleware } from "./src/interface/errorMiddleware.js";
@@ -218,8 +220,10 @@ async function fridgeBuddyBootstrap() {
 
     // Scanner setup
     const barcodeRepository = new OffRepository();
+    const receiptRepository = new TabScannerRepository({ apiKey: process.env.TABSCANNER_API_KEY });
     const barcodeScannerUseCase = new BarcodeScannerUseCase({ barcodeRepository });
-    const scannerController = new ScannerController({ barcodeScannerUseCase });
+    const receiptScannerUseCase = new ReceiptScannerUseCase({ receiptRepository });
+    const scannerController = new ScannerController({ barcodeScannerUseCase, receiptScannerUseCase });
 
     app.use('/api', buildRecipeRouter(recipeController));
     app.use('/api/fridge', buildFridgeRouter(fridgeController));
