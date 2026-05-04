@@ -2,13 +2,8 @@ import z from "zod";
 import { ItemNameNormalizer } from "../../app/ports/ItemNameNormalizer.js";
 
 const NormalizationSchema = z.object({
-    suggestions: z.array(
-        z.object({
-            name: z.string().min(1),
-            confidence: z.number().min(0).max(1)
-        })
-    ).max(2),
-    fallback: z.string().min(1).default("unknown_item")
+    normalized_name: z.string().min(1),
+    confidence: z.number().min(0).max(1)
 });
 
 const itemNameTools = [
@@ -16,7 +11,7 @@ const itemNameTools = [
         functionDeclarations: [
             {
                 name: "emit_item_name_normalization",
-                description: "Return up to 2 item name suggestions with confidence and a fallback token.",
+                description: "Return one normalized grocery name and confidence.",
                 parameters: z.toJSONSchema(NormalizationSchema)
             }
         ]
@@ -45,9 +40,8 @@ You normalize grocery receipt abbreviations into canonical grocery item names.
 Return ONLY via the tool "emit_item_name_normalization".
 
 Rules:
-- Return 1-2 likely grocery item names in suggestions, sorted best first.
+- Return one best normalized grocery item name.
 - Confidence must be a decimal 0..1.
-- If uncertain, still provide best guesses and set fallback to "unknown_item".
 - Keep names simple and lowercase (e.g., "boneless chicken breast", "green onions").
 `;
 
@@ -93,17 +87,10 @@ function buildFallback(rawName) {
 }
 
 function finalizeNormalization({ rawName, parsed, autoApplyConfidence }) {
-    const suggestions = parsed.suggestions.slice(0, 2);
-    const top = suggestions[0];
-
-    if (!top) {
-        return buildFallback(rawName);
-    }
-
-    const autoApplied = top.confidence >= autoApplyConfidence;
+    const autoApplied = parsed.confidence >= autoApplyConfidence;
     return {
         raw_name: rawName,
-        name: autoApplied ? top.name : (rawName || top.name),
+        name: autoApplied ? parsed.normalized_name : (rawName || parsed.normalized_name),
         auto_applied: autoApplied
     };
 }
