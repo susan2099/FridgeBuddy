@@ -103,6 +103,48 @@ export async function save_to_fridge(items:Array<fridgeIngredient>) {
 	await load_to_fridge();
 }
 
+export async function load_firebase(userId:string) {
+	const response = await fetch("http://localhost:4000/api/fridge/get", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json"
+		},
+		body: JSON.stringify({
+			"userId": userId
+		})
+	});
+
+	if(response.ok) {
+		const data = await response.json();
+		console.log(JSON.stringify(data));
+	} else {
+		console.log("fail load firebase");
+	}
+}
+
+// expiry must be a valid date string
+export async function add_firebase(userId:string, name:string, quantity:number, unit:string, expiry:string, allergens:Array<string>) {
+	const response = await fetch("http://localhost:4000/api/fridge", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json"
+		},
+		body: JSON.stringify({
+			"userId": userId,
+			"name": name,
+			"quantity": quantity,
+			"unit": unit,
+			"expiry": expiry,
+			"allergens": allergens
+		})
+	});
+
+	if(response.ok) {
+		const data = await response.json();
+		console.log(JSON.stringify(data));
+	}
+}
+
 export async function T_save_and_load() {
 	await save_yaml_to_db(`# TESTING PURPOSES ONLY!
 items:

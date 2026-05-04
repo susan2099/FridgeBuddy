@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import {Link} from 'react-router-dom';
 // import {print_db} from './scripts/DBManager';
 import {save_to_fridge, load_to_fridge, T_save_and_load as test} from './scripts/FridgeManager';
+import {load_firebase} from './scripts/FridgeManager';
 import { usePhotoGallery } from './hooks/usePhotoGallery';
 // import * as CONSTS from './scripts/CONSTS.ts';
 
@@ -11,8 +12,6 @@ export type fridgeIngredient = {
 	expiry: string,
 	addedAt: string,
 }
-
-
 
 export default function Fridge() {
 	const {photos, addNewToGallery} = usePhotoGallery();
@@ -104,6 +103,7 @@ export default function Fridge() {
 						} 
 						onClick={test}>Add (+) (Test version)</button><br/>
 				{/* <button onClick={() => {print_db(CONSTS.FRIDGE_DB, CONSTS.FRIDGE_TABLE);}}>DEBUG: print indexeddb content</button><br/> */}
+				<button onClick={async () => {await load_firebase("Steven");}}>load firebase</button>
 				<Link to="/">
 					<button style={{display:"block", margin:"auto"}}>Back</button>
 				</Link>

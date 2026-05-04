@@ -12,6 +12,8 @@ export async function request_recipe(additionalInfo: string) {
 		prefs["preferences"][index] = key.text;
 	});
 
+	console.log("generating a recipe...");
+
 	// in-browser: localhost is OK
 	// emulator: use a LAN IP
 	const response = await fetch("http://localhost:4000/api/recipe", {
