@@ -48,4 +48,47 @@ export class FsFridgeRepository extends FridgeRepository {
         });
         return items;
     }
+<<<<<<< HEAD
+=======
+
+    async updateById({ userId, itemId, updates }) {
+        const docRef = db
+            .collection('users')
+            .doc(userId)
+            .collection('items')
+            .doc(itemId);
+
+        await docRef.update(updates);
+
+        const updatedDoc = await docRef.get();
+        const data = updatedDoc.data();
+
+        return new FridgeItem({
+            id: updatedDoc.id,
+            userId,
+            name: data.name,
+            quantity: data.quantity,
+            unit: data.unit,
+            expiry: data.expiry,
+            allergens: data.allergens,
+            createdAt: data.createdAt
+        });
+    }
+
+    async deleteById({ userId, itemId }) {
+        const docRef = db
+            .collection('users')
+            .doc(userId)
+            .collection('items')
+            .doc(itemId);
+
+        await docRef.delete();
+
+        return {
+            userId,
+            itemId,
+            deleted: true
+        };
+    }
+>>>>>>> main
 }

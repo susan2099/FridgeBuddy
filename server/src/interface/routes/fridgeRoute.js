@@ -8,5 +8,7 @@ export function buildFridgeRouter(fridgeController) {
     const router = express.Router();
     router.post('/add', fridgeController.addFridgeItem);
     router.post('/get', fridgeController.getFridgeItem);
+    router.post('/update', fridgeController.updateFridgeItem);
+    router.post('/delete', fridgeController.deleteFridgeItem);
     return router;
 }

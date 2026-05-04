@@ -8,14 +8,22 @@ import process from 'node:process';
 import { createGeminiClient } from "./src/data/gemini/geminiClient.js";
 import { GeminiRecipeGenerator } from "./src/data/gemini/GeminiRecipeGenerator.js";
 
-import { RecipeUseCase } from "./src/app/usecases/recipe/RecipeUsecase.js";
+import { RecipeUseCase } from "./src/app/usecases/recipe/RecipeUseCase.js";
 import { RecipeController } from "./src/interface/controllers/RecipeController.js";
 import { buildRecipeRouter } from "./src/interface/routes/recipeRoute.js";
 import { FsFridgeRepository } from './src/data/fridge/FsFridgeRepository.js';
 import { AddFridgeItemUseCase } from "./src/app/usecases/fridge/AddFridgeItemUseCase.js";
 import { GetFridgeItemUseCase } from "./src/app/usecases/fridge/GetFridgeItemUseCase.js";
+import { UpdateFridgeItemUseCase } from "./src/app/usecases/fridge/UpdateFridgeItemUseCase.js";
+import { DeleteFridgeItemUseCase } from "./src/app/usecases/fridge/DeleteFridgeItemUseCase.js";
 import { FridgeController } from "./src/interface/controllers/FridgeController.js";
 import { buildFridgeRouter } from "./src/interface/routes/fridgeRoute.js";
+import { OffRepository } from "./src/data/openFoodFact/OffRepository.js";
+import { TabScannerRepository } from "./src/data/tabscanner/TabScannerRepository.js";
+import { BarcodeScannerUseCase } from "./src/app/usecases/scanner/BarcodeScannerUseCase.js";
+import { ReceiptScannerUseCase } from "./src/app/usecases/scanner/ReceiptScannerUseCase.js";
+import { ScannerController } from "./src/interface/controllers/ScannerController.js";
+import { buildScannerRouter } from "./src/interface/routes/scannerRoute.js";
 import { errorMiddleware } from "./src/interface/errorMiddleware.js";
 
 import cors from 'cors';
@@ -201,10 +209,25 @@ async function fridgeBuddyBootstrap() {
     const fridgeRepository = new FsFridgeRepository();
     const addFridgeItemUseCase = new AddFridgeItemUseCase({ fridgeRepository });
     const getFridgeItemUseCase = new GetFridgeItemUseCase({ fridgeRepository });
-    const fridgeController = new FridgeController({ addFridgeItemUseCase, getFridgeItemUseCase });
+    const updateFridgeItemUseCase = new UpdateFridgeItemUseCase({ fridgeRepository });
+    const deleteFridgeItemUseCase = new DeleteFridgeItemUseCase({ fridgeRepository });
+    const fridgeController = new FridgeController({
+        addFridgeItemUseCase,
+        getFridgeItemUseCase,
+        updateFridgeItemUseCase,
+        deleteFridgeItemUseCase
+    });
+
+    // Scanner setup
+    const barcodeRepository = new OffRepository();
+    const receiptRepository = new TabScannerRepository({ apiKey: process.env.TABSCANNER_API_KEY });
+    const barcodeScannerUseCase = new BarcodeScannerUseCase({ barcodeRepository });
+    const receiptScannerUseCase = new ReceiptScannerUseCase({ receiptRepository });
+    const scannerController = new ScannerController({ barcodeScannerUseCase, receiptScannerUseCase });
 
     app.use('/api', buildRecipeRouter(recipeController));
     app.use('/api/fridge', buildFridgeRouter(fridgeController));
+    app.use('/api/scanner', buildScannerRouter(scannerController));
     app.use(errorMiddleware);
 
     const PORT = process.env.RECIPE_GENERATOR_PORT || 4000;
