@@ -7,6 +7,7 @@ import process from 'node:process';
 
 import { createGeminiClient } from "./src/data/gemini/geminiClient.js";
 import { GeminiRecipeGenerator } from "./src/data/gemini/GeminiRecipeGenerator.js";
+import { GeminiItemNameNormalizer } from "./src/data/gemini/GeminiItemNameNormalizer.js";
 
 import { RecipeUseCase } from "./src/app/usecases/recipe/RecipeUseCase.js";
 import { RecipeController } from "./src/interface/controllers/RecipeController.js";
@@ -221,8 +222,9 @@ async function fridgeBuddyBootstrap() {
     // Scanner setup
     const barcodeRepository = new OffRepository();
     const receiptRepository = new TabScannerRepository({ apiKey: process.env.TABSCANNER_API_KEY });
+    const itemNameNormalizer = new GeminiItemNameNormalizer({ ai });
     const barcodeScannerUseCase = new BarcodeScannerUseCase({ barcodeRepository });
-    const receiptScannerUseCase = new ReceiptScannerUseCase({ receiptRepository });
+    const receiptScannerUseCase = new ReceiptScannerUseCase({ receiptRepository, itemNameNormalizer });
     const scannerController = new ScannerController({ barcodeScannerUseCase, receiptScannerUseCase });
 
     app.use('/api', buildRecipeRouter(recipeController));
