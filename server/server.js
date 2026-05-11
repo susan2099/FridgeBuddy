@@ -222,7 +222,7 @@ async function fridgeBuddyBootstrap() {
     const barcodeRepository = new OffRepository();
     const receiptRepository = new TabScannerRepository({ apiKey: process.env.TABSCANNER_API_KEY });
     const barcodeScannerUseCase = new BarcodeScannerUseCase({ barcodeRepository });
-    const receiptScannerUseCase = new ReceiptScannerUseCase({ receiptRepository });
+    const receiptScannerUseCase = new ReceiptScannerUseCase({ receiptRepository, fridgeRepository });
     const scannerController = new ScannerController({ barcodeScannerUseCase, receiptScannerUseCase });
 
     app.use('/api', buildRecipeRouter(recipeController));

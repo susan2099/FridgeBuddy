@@ -7,7 +7,22 @@ export class AddFridgeItemUseCase {
         this.fridgeRepository = fridgeRepository;
     }
 
-    async execute({userId, name, quantity, unit, expiry, allergens}) {
+    async execute(input) {
+        const items = Array.isArray(input?.items) ? input.items : null;
+
+        if (items) {
+            if (!items.length) {
+                throw new ValidationError({ message: 'Items array cannot be empty', details: { field: 'items' } });
+            }
+            const fridgeItems = items.map((item) => this.buildItem(item));
+            return await this.fridgeRepository.addMany(fridgeItems);
+        }
+
+        const item = this.buildItem(input);
+        return await this.fridgeRepository.add(item);
+    }
+
+    buildItem({userId, name, quantity, unit, expiry, allergens}) {
         if (!userId) {
             throw new ValidationError({ message: 'User ID is required', details: { field: 'userId' } });
         }
@@ -44,6 +59,6 @@ export class AddFridgeItemUseCase {
             createdAt: new Date()
         });
 
-        return await this.fridgeRepository.add(item);
+        return item;
     }
 }
