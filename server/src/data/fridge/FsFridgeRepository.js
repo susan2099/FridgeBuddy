@@ -25,6 +25,38 @@ export class FsFridgeRepository extends FridgeRepository {
         })
     }
 
+    async addMany(items) {
+        const batch = db.batch();
+        const createdItems = [];
+
+        for (const item of items) {
+            const payload = {
+                name: item.name,
+                quantity: item.quantity ?? null,
+                unit: item.unit ?? null,
+                expiry: item.expiry ?? null,
+                allergens: item.allergens ?? [],
+                createdAt: item.createdAt ?? new Date()
+            };
+
+            const docRef = db
+                .collection('users')
+                .doc(item.userId)
+                .collection('items')
+                .doc();
+
+            batch.set(docRef, payload);
+            createdItems.push(new FridgeItem({
+                id: docRef.id,
+                userId: item.userId,
+                ...payload
+            }));
+        }
+
+        await batch.commit();
+        return createdItems;
+    }
+
     async getAllByUserId(userId) {
         const snapshot = await db
             .collection('users')
