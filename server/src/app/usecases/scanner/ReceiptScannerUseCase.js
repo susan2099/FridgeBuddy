@@ -42,7 +42,7 @@ export class ReceiptScannerUseCase {
             const itemsToSave = processedItems.map((item) => ({
                 userId,
                 name: item.name,
-                quantity: item.quantity ?? null,
+                quantity: normalizeReceiptQuantity(item.quantity),
                 unit: item.unit ?? null,
                 expiry: item.expiry ?? null,
                 allergens: item.allergens ?? [],
@@ -62,4 +62,17 @@ export class ReceiptScannerUseCase {
             items: processedItems
         };
     }
+}
+
+function normalizeReceiptQuantity(quantity) {
+    if (typeof quantity === 'number' && Number.isFinite(quantity) && quantity > 0) {
+        return quantity;
+    }
+    if (typeof quantity === 'string') {
+        const parsed = Number(quantity);
+        if (Number.isFinite(parsed) && parsed > 0) {
+            return parsed;
+        }
+    }
+    return 1;
 }
