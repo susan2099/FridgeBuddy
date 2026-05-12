@@ -23,10 +23,7 @@ export class ScannerController {
     }
     async scanReceipt(req, res, next) {
         try {
-            const result = await this.receiptScannerUseCase.execute({
-                img: req.file,
-                userId: req.body?.userId
-            });
+            const result = await this.receiptScannerUseCase.execute({ img: req.file });
             res.status(200).json(success(result));
         } catch (error) {
             next(error);
