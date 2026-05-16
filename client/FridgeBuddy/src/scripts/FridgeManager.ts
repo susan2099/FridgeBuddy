@@ -32,7 +32,7 @@ export async function receipt_scan(photo: Record<string, any>) {
 	const formData = new FormData();
 	formData.append("img", blob, "receipt.jpg");
 
-	const result = await fetch("http://localhost:4000/api/scanner/receipt", {
+	const result = await fetch("http://localhost:3000/api/scanner/receipt", {
 		method: "POST",
 		body: formData
 	});
