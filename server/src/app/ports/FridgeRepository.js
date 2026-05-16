@@ -5,9 +5,6 @@ export class FridgeRepository {
     async getAllByUserId() {
         throw new Error("FridgeRepository.getAllByUserId() must be implemented");
     }
-<<<<<<< HEAD
-}
-=======
     async updateById() {
         throw new Error("FridgeRepository.updateById() must be implemented");
     }
@@ -15,4 +12,3 @@ export class FridgeRepository {
         throw new Error("FridgeRepository.deleteById() must be implemented");
     }
 }
->>>>>>> main

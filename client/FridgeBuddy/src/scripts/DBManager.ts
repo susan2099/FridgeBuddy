@@ -80,3 +80,49 @@ async function save_to_db(db_name:string, table_name:string, data:Array<Record<s
 
 	close_db(db);
 }
+
+export async function load_firebase(userId:string) : Promise<Record<string, any>|boolean> {
+	const response = await fetch("http://localhost:4000/api/fridge/get", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json"
+		},
+		body: JSON.stringify({
+			"userId": userId
+		})
+	});
+
+	if(response.ok) {
+		const data = await response.json();
+		console.log(JSON.stringify(data.data));
+		return data.data;
+	} else {
+		console.log("fail load firebase");
+		return false;
+	}
+}
+
+// expiry must be a valid date string
+export async function add_firebase(userId:string, name:string, quantity:number, unit:string, expiry:Record<string, any>|null, allergens:Array<string>) {
+	const response = await fetch("http://localhost:4000/api/fridge/add", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json"
+		},
+		body: JSON.stringify({
+			"userId": userId,
+			"name": name,
+			"quantity": quantity,
+			"unit": unit,
+			"expiry": expiry,
+			"allergens": allergens
+		})
+	});
+
+	if(response.ok) {
+		const data = await response.json();
+		console.log(JSON.stringify(data));
+	} else {
+		console.log("fail add firebase");
+	}
+}

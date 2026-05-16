@@ -48,8 +48,6 @@ export class FsFridgeRepository extends FridgeRepository {
         });
         return items;
     }
-<<<<<<< HEAD
-=======
 
     async updateById({ userId, itemId, updates }) {
         const docRef = db
@@ -90,5 +88,4 @@ export class FsFridgeRepository extends FridgeRepository {
             deleted: true
         };
     }
->>>>>>> main
 }

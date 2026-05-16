@@ -7,6 +7,7 @@ const FILE_EXTENSION = ".png";
 
 export function usePhotoGallery() {
     const [photos, setPhotos] = useState<UserPhoto[]>([]);
+	const clearPhotos = () => setPhotos([]);
 
 	const addNewToGallery = async () => {
 		// Take a photo
@@ -30,9 +31,9 @@ export function usePhotoGallery() {
 
 	return {
 		addNewToGallery,
+		clearPhotos,
 		photos
 	};
-
 }
 
 export interface UserPhoto {

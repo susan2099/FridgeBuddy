@@ -32,8 +32,8 @@ export async function request_recipe(additionalInfo: string) {
 
 	if(response.ok) {
 		const data = await response.json();
-		console.log(JSON.stringify(data));
-		return data;
+		console.log(JSON.stringify(data.data));
+		return data.data;
 	} else {
 		console.error("couldn't get a recipe");
 		return false;
