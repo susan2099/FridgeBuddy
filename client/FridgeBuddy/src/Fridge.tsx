@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {Link} from 'react-router-dom';
-import {load_fridge_data, save_to_fridge} from './scripts/FridgeManager';
+import {load_fridge_data, save_to_fridge, receipt_scan } from './scripts/FridgeManager';
 import { usePhotoGallery } from './hooks/usePhotoGallery';
 import { seconds_to_string_date } from './scripts/Helpers.ts';
 
@@ -12,6 +12,12 @@ export type fridgeItem = {
 	allergens: Array<string>,
 	createdAt: Date,
 }
+
+// type ReceiptScanFridgeItem = {
+// 	name: string,
+// 	quantity: number,
+// 	unit: string,
+// }
 
 export default function Fridge() {
 	const {photos, addNewToGallery, clearPhotos} = usePhotoGallery();
@@ -26,6 +32,8 @@ export default function Fridge() {
 		expiry:"", 
 		allergens:Array<string>()
 	});
+
+	const [receiptScanResults, setReceiptScanResults] = useState(Array<fridgeItem>());
 
 	useEffect(
 		() => {
@@ -56,6 +64,11 @@ export default function Fridge() {
 		setFormData((prevFormData) => ({... prevFormData, [name]: value}));
 	}
 
+	function handleReceiptScanInputFormChange(index:number, field: keyof fridgeItem, value: any) {
+		setReceiptScanResults(prev => prev.map((item, i) => 
+			i === index ? { ...item, [field]: value} : item
+		));
+	}
 
 	return (
 		<>
@@ -156,9 +169,10 @@ export default function Fridge() {
 							display:"block", 
 							margin:"2px auto"
 						}} 
-						onClick={() => {
-							addNewToGallery(); 
+						onClick={async () => {
+							const savedImage = await addNewToGallery();
 							toggleImagePanel();
+							await receipt_scan(savedImage);
 						}}
 				>Add (+) (Take a picture)</button><br/>
 				
@@ -221,6 +235,38 @@ export default function Fridge() {
 						minHeight: "0",
 						overflowY: "auto",
 					}}>
+						<form id="receiptScanResultsForm">
+						{
+							receiptScanResults.map((item, index) => (
+								<div key={index}>
+									<label id="itemNameLabel">Item Name </label>
+									<input 
+										type="text" id="itemName" name="name" value={item.name} 
+										onChange={(e) => {handleReceiptScanInputFormChange(index, "name", e.target.value);}}>
+									</input><br/>
+
+									<label id="itemQtyLabel">Quantity </label>
+									<input 
+										type="number" id="itemQty" name="quantity" value={item.quantity} 
+										onChange={(e) => {handleReceiptScanInputFormChange(index, "name", e.target.value);}}>
+									</input>
+									<input 
+										type="text" name="unit" value={item.unit} 
+										onChange={(e) => {handleReceiptScanInputFormChange(index, "name", e.target.value);}} placeholder="unit (eg: kg, lbs, L, cups, etc)">
+									</input><br/>
+									
+									<label id="itemExpiryLabel">Expiration Date </label>
+									<input 
+										type="date" name="expiry" value={""} 
+										onChange={(e) => {handleReceiptScanInputFormChange(index, "name", e.target.value);}}>
+									</input><br/>
+
+									<label id="itemAllergensLabel">Allergens </label>
+									<input type=""></input><br/> <button type="button">+</button> { }
+								</div>
+							))
+						}
+						</form>
 					</div>
 				</div>
 
@@ -255,7 +301,7 @@ export default function Fridge() {
 					<input type="date" name="expiry" value={formData.expiry} onChange={handleManualInputFormChange}></input><br/>
 
 					<label id="itemAllergensLabel">Allergens </label>
-					<input type=""></input><br/> <button type="button">+</button> { /* TODO: need to add a way to add many allergens, and a way to remove/edit them. yuk */ }
+					<input type=""></input><br/> <button type="button">+</button> { /* TODO: need to add a way to add many allergens, and a way to remove/edit them. */ }
 
 					<button type="button" onClick={() => {setManualInputVisibility(false);}}>Cancel</button>
 					<button>Submit</button>

@@ -94,7 +94,7 @@ export async function load_firebase(userId:string) : Promise<Record<string, any>
 
 	if(response.ok) {
 		const data = await response.json();
-		console.log(JSON.stringify(data.data));
+		// console.log(JSON.stringify(data.data));
 		return data.data;
 	} else {
 		console.log("fail load firebase");

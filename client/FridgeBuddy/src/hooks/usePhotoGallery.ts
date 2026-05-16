@@ -27,6 +27,7 @@ export function usePhotoGallery() {
         ];
 
         setPhotos(savedImageFile);
+		return savedImageFile;
 	};
 
 	return {
