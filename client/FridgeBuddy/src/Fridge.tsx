@@ -70,6 +70,22 @@ export default function Fridge() {
 		));
 	}
 
+	function handleReceiptScanResults(results:Array<Record<string, any>>) {
+		// allergens: Array [], auto_applied: true, createdAt: null, expiry: null, id: null, name: "sugar", quantity: 1, raw_name: "ST # OP # SUGAR $", unit: "", userId: null
+		const fridgeItemResults = results.map((result) => (
+			{
+				name: result.name,
+				quantity: result.quantity,
+				unit: result.unit,
+				expiry: result.expiry,
+				allergens: result.allergens,
+				createdAt: result.createdAt
+			} as fridgeItem
+		));
+
+		setReceiptScanResults(fridgeItemResults);
+	}
+
 	return (
 		<>
 		{
@@ -172,7 +188,8 @@ export default function Fridge() {
 						onClick={async () => {
 							const savedImage = await addNewToGallery();
 							toggleImagePanel();
-							await receipt_scan(savedImage);
+							const results = await receipt_scan(savedImage);
+							handleReceiptScanResults(results);
 						}}
 				>Add (+) (Take a picture)</button><br/>
 				
@@ -194,6 +211,7 @@ export default function Fridge() {
 				id="photoUploader" 
 				className="popup outline" 
 				style={{
+					minWidth: "85%",
 					display:(isVisible) ? "flex" : "none"
 				}}
 			>
@@ -201,25 +219,24 @@ export default function Fridge() {
 					fontSize: "1.6em",
 					margin: "0em 0.4em 0em 0em",
 				}}><b>Adding Items</b></p>
+				<hr></hr>
 
-				<div style={{
+				<div id="photoAndResultHolder" style={{
 					display: "flex",
 					flex: "1",
 					overflow: "hidden",
 					width: "100%",
 					minHeight: "0",
+					maxHeight: "100%",
 					margin: "0.4em 0em 1.2em 0em",
 					alignItems: "stretch",
 				}}>
-					{photos.map((photo) => (
-						<div style={{
-							height: "100%",
+					{photos.map((photo, index) => (
+						<div id={`photo${index}`} style={{
+							maxHeight: "60vh",
+							minWidth: "0",
 							maxWidth: "50%",
 							overflow: "hidden",
-							flexShrink: "0",
-							alignSelf: "center",
-							border: "1px solid red",
-
 						}}>
 							<img src={photo.webviewPath} style={{
 								height: "100%",
@@ -248,17 +265,18 @@ export default function Fridge() {
 									<label id="itemQtyLabel">Quantity </label>
 									<input 
 										type="number" id="itemQty" name="quantity" value={item.quantity} 
-										onChange={(e) => {handleReceiptScanInputFormChange(index, "name", e.target.value);}}>
+										onChange={(e) => {handleReceiptScanInputFormChange(index, "quantity", e.target.value);}}>
 									</input>
 									<input 
 										type="text" name="unit" value={item.unit} 
-										onChange={(e) => {handleReceiptScanInputFormChange(index, "name", e.target.value);}} placeholder="unit (eg: kg, lbs, L, cups, etc)">
+										onChange={(e) => {handleReceiptScanInputFormChange(index, "unit", e.target.value);}} 
+										placeholder="unit (eg: kg, lbs, L, cups, etc)">
 									</input><br/>
 									
 									<label id="itemExpiryLabel">Expiration Date </label>
 									<input 
-										type="date" name="expiry" value={""} 
-										onChange={(e) => {handleReceiptScanInputFormChange(index, "name", e.target.value);}}>
+										type="date" name="expiry" value={""} /* receiptScanResults[index].expiry */
+										onChange={(e) => {handleReceiptScanInputFormChange(index, "expiry", e.target.value);}}>
 									</input><br/>
 
 									<label id="itemAllergensLabel">Allergens </label>
@@ -295,7 +313,10 @@ export default function Fridge() {
 
 					<label id="itemQtyLabel">Quantity </label>
 					<input type="number" id="itemQty" name="quantity" value={formData.quantity} onChange={handleManualInputFormChange}></input>
-					<input type="text" name="unit" value={formData.unit} onChange={handleManualInputFormChange} placeholder="unit (eg: kg, lbs, L, cups, etc)"></input><br/>
+					<input 
+						type="text" name="unit" value={formData.unit} onChange={handleManualInputFormChange} 
+						placeholder="unit (eg: kg, lbs, L, cups, etc)">
+					</input><br/>
 					
 					<label id="itemExpiryLabel">Expiration Date </label>
 					<input type="date" name="expiry" value={formData.expiry} onChange={handleManualInputFormChange}></input><br/>

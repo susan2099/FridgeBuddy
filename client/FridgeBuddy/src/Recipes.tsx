@@ -121,7 +121,13 @@ function Recipes() {
 				</Link>
 			</div>
 
-			<div id="recipePanel" className="recipe_panel outline" style={{ display: (recipePanelVisible) ? "flex" : "none" }}>
+			<div 
+				id="recipePanel" className="recipe_panel outline" 
+				style={{ 
+					display: (recipePanelVisible) ? "flex" : "none",
+					width: "85vw",
+				}}
+			>
 				{
 					recipeSuccessfullyGenerated ? 
 					<div>

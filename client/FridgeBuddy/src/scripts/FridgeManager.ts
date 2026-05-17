@@ -26,9 +26,15 @@ export async function save_to_fridge(items: Array<fridgeItem>) {
 
 export async function receipt_scan(photo: Record<string, any>) {
 	console.log("requesting receipt scan backend");
-	const response = await fetch(photo.webviewPath!);
-	const blob = await response.blob();
+
+	const base64 = photo.webviewPath!.split(",")[1]; // strip header from dataurl
+	const byteCharacters = atob(base64); // decode base64 to binary string
+	const byteArray = Uint8Array.from(byteCharacters, c => c.charCodeAt(0));
 	
+	const blob = new Blob([byteArray], { type: "image/jpeg" });
+	// console.log(blob.size);
+	// console.log(blob.type);
+
 	const formData = new FormData();
 	formData.append("img", blob, "receipt.jpg");
 
@@ -38,6 +44,6 @@ export async function receipt_scan(photo: Record<string, any>) {
 	});
 
 	const data = await result.json();
-	console.log(data);
-	return data;
+	console.log(data.data.items);
+	return data.data.items;
 }
