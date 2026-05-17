@@ -19,19 +19,23 @@ export class ReceiptScannerUseCase {
 
         let processedItems = items;
         if (this.itemNameNormalizer) {
-            processedItems = await Promise.all(
-                items.map(async (item) => {
-                    const rawName = item?.name || "";
-                    const normalizedName = await this.itemNameNormalizer.normalize({ rawName });
+            const rawNames = items.map(item => item?.name || "");
+            const normalizedNames = await this.itemNameNormalizer.normalize({ rawNames });
+            processedItems = items
+                .map((item, index) => {
+                    const normalizedName = normalizedNames[index];
+                    if (!normalizedName?.normalized_name) {
+                        return null;
+                    }
                     return {
                         ...item,
-                        name: normalizedName.name,
+                        name: normalizedName.normalized_name,
                         quantity: normalizeReceiptQuantity(item.quantity),
                         raw_name: normalizedName.raw_name,
-                        auto_applied: normalizedName.auto_applied
+                        confidence: normalizedName.confidence
                     };
                 })
-            );
+                .filter(Boolean);
         }
 
         return {

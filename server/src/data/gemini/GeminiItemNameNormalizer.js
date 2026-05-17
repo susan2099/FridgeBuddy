@@ -1,9 +1,14 @@
 import z from "zod";
 import { ItemNameNormalizer } from "../../app/ports/ItemNameNormalizer.js";
 
-const NormalizationSchema = z.object({
-    normalized_name: z.string().min(1),
+const NormalizedItemSchema = z.object({
+    raw_name: z.string(),
+    normalized_name: z.string().min(1).nullable(),
     confidence: z.number().min(0).max(1)
+});
+
+const NormalizationSchema = z.object({
+    items: z.array(NormalizedItemSchema)
 });
 
 const itemNameTools = [
@@ -11,7 +16,7 @@ const itemNameTools = [
         functionDeclarations: [
             {
                 name: "emit_item_name_normalization",
-                description: "Return one normalized grocery name and confidence.",
+                description: "Return normalized grocery names and confidence scores.",
                 parameters: z.toJSONSchema(NormalizationSchema)
             }
         ]
@@ -19,7 +24,7 @@ const itemNameTools = [
 ];
 
 export class GeminiItemNameNormalizer extends ItemNameNormalizer {
-    constructor({ ai, model = "gemini-2.5-flash", temperature = 0.2, autoApplyConfidence = 0.85 }) {
+    constructor({ ai, model = "gemini-2.5-flash", temperature = 0.5 }) {
         super();
         if (!ai) {
             throw new Error("AI instance is required");
@@ -27,25 +32,29 @@ export class GeminiItemNameNormalizer extends ItemNameNormalizer {
         this.ai = ai;
         this.model = model;
         this.temperature = temperature;
-        this.autoApplyConfidence = autoApplyConfidence;
     }
 
-    async normalize({ rawName }) {
-        if (!rawName || !rawName.trim()) {
-            return buildFallback(rawName);
+    async normalize({ rawNames }) {
+        if (!Array.isArray(rawNames) || !rawNames.length) {
+            return [];
         }
+
+        const names = rawNames.map(rawName => rawName || "");
 
         const systemInstruction = `
 You normalize grocery receipt abbreviations into canonical grocery item names.
 Return ONLY via the tool "emit_item_name_normalization".
 
 Rules:
-- Return one best normalized grocery item name.
+- Return one result for each input item, preserving the original order.
+- Include the original input as raw_name.
+- Return one best normalized grocery item name for each edible food ingredient.
+- If the input is clearly not an edible food ingredient, set normalized_name to null.
 - Confidence must be a decimal 0..1.
 - Keep names simple and lowercase (e.g., "boneless chicken breast", "green onions").
 `;
 
-        const userPrompt = `Raw receipt item text: "${rawName}"`;
+        const userPrompt = `Raw receipt item texts:\n${names.map((name, index) => `${index + 1}. "${name}"`).join("\n")}`;
 
         try {
             const resp = await this.ai.models.generateContent({
@@ -61,36 +70,40 @@ Rules:
             const parts = resp?.candidates?.[0]?.content?.parts ?? [];
             const functionCallPart = parts.find((p) => p.functionCall);
             if (!functionCallPart) {
-                return buildFallback(rawName);
+                return buildFallback(names);
             }
 
             const args = functionCallPart.functionCall.args;
             const parsed = NormalizationSchema.parse(args);
-            return finalizeNormalization({
-                rawName,
-                parsed,
-                autoApplyConfidence: this.autoApplyConfidence
-            });
+            return finalizeNormalization({ rawNames: names, parsed });
         } catch {
-            return buildFallback(rawName);
+            return buildFallback(names);
         }
     }
 }
 
-function buildFallback(rawName) {
-    const name = (rawName || "unknown_item").trim() || "unknown_item";
-    return {
-        raw_name: rawName || "",
-        name,
-        auto_applied: false
-    };
+function buildFallback(rawNames) {
+    return rawNames.map(rawName => {
+        const name = (rawName || "unknown_item").trim() || "unknown_item";
+        return {
+            raw_name: rawName || "",
+            normalized_name: name,
+            confidence: 0
+        };
+    });
 }
 
-function finalizeNormalization({ rawName, parsed, autoApplyConfidence }) {
-    const autoApplied = parsed.confidence >= autoApplyConfidence;
-    return {
-        raw_name: rawName,
-        name: autoApplied ? parsed.normalized_name : (rawName || parsed.normalized_name),
-        auto_applied: autoApplied
-    };
+function finalizeNormalization({ rawNames, parsed }) {
+    return rawNames.map((rawName, index) => {
+        const normalized = parsed.items[index];
+        if (!normalized) {
+            return buildFallback([rawName])[0];
+        }
+
+        return {
+            raw_name: normalized.raw_name || rawName,
+            normalized_name: normalized.normalized_name,
+            confidence: normalized.confidence
+        };
+    });
 }
