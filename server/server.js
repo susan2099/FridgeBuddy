@@ -23,6 +23,12 @@ import { ReceiptScannerUseCase } from "./src/app/usecases/scanner/ReceiptScanner
 import { ScannerController } from "./src/interface/controllers/ScannerController.js";
 import { buildScannerRouter } from "./src/interface/routes/scannerRoute.js";
 import { errorMiddleware } from "./src/interface/errorMiddleware.js";
+import { db, firebaseMessaging } from "./src/data/firebase/firebaseAdmin.js";
+import { FirebaseFcmMessageGateway } from "./src/data/fcm/FirebaseFcmMessageGateway.js";
+import { FirestoreFcmTokenRepository } from "./src/data/fcm/FirestoreFcmTokenRepository.js";
+import { FcmUseCase } from "./src/app/usecases/fcm/FcmUseCase.js";
+import { FcmController } from "./src/interface/controllers/FcmController.js";
+import { buildFcmRouter } from "./src/interface/routes/fcmRoute.js";
 
 import cors from 'cors';
 
@@ -60,9 +66,16 @@ async function fridgeBuddyBootstrap() {
     const receiptScannerUseCase = new ReceiptScannerUseCase({ receiptRepository, itemNameNormalizer, fridgeRepository });
     const scannerController = new ScannerController({ barcodeScannerUseCase, receiptScannerUseCase });
 
+    // FCM push notification setup
+    const fcmMessageGateway = new FirebaseFcmMessageGateway({ firebaseMessaging });
+    const fcmTokenRepository = new FirestoreFcmTokenRepository({ db });
+    const fcmUseCase = new FcmUseCase({ fcmMessageGateway, fcmTokenRepository });
+    const fcmController = new FcmController({ fcmUseCase });
+
     app.use('/api', buildRecipeRouter(recipeController));
     app.use('/api/fridge', buildFridgeRouter(fridgeController));
     app.use('/api/scanner', buildScannerRouter(scannerController));
+    app.use('/api/fcm', buildFcmRouter(fcmController));
     app.use(errorMiddleware);
 
     const PORT = process.env.PORT || 3000;

@@ -135,6 +135,21 @@ npx cap open android
 
 Run the app from Android Studio using an emulator or connected Android device.
 
+If Android Studio fails to build or launch the app, try preparing the Android
+dependencies from the terminal first, then run directly through Capacitor:
+
+```bash
+cd client/FridgeBuddy
+npm install
+npm run build
+npx cap sync android
+npx cap run android
+```
+
+Capacitor will prompt you to choose an available emulator or connected Android
+device. This can be useful when Android Studio has trouble resolving Gradle or
+project dependencies on its own.
+
 ### Running in-browser
 
 Start the backend:

@@ -73,22 +73,17 @@ function Recipes() {
 	async function handleSubmit(event:any) {
 		event.preventDefault(); // stop form submission from reloading page
 
-		if(DEBUG) {
-			if(formData.additionalOptions == "omelet") {
-				setRecipeGenerationSuccess(true);
+		const response = await request_recipe(formData.additionalOptions);
+
+		setRecipeGenerationSuccess(true);
+		if(response === false) { // recipe failed to generate, give the default recipe
+			if(DEBUG) {
 				setRecipeData(omeletTestRecipe);
 			} else {
 				setRecipeGenerationSuccess(false);
 			}
-		} else {
-			const response = await request_recipe(formData.additionalOptions);
-
-			if(response === false) { // recipe failed to generate
-				setRecipeGenerationSuccess(false);
-			} else { // we got some recipe!!! probably.
-				setRecipeGenerationSuccess(true);
-				setRecipeData(response);
-			}
+		} else { // we got some recipe!!! probably.
+			setRecipeData(response);
 		}
 
 		toggleRecipePanelVisibility();
@@ -126,7 +121,13 @@ function Recipes() {
 				</Link>
 			</div>
 
-			<div id="recipePanel" className="recipe_panel outline" style={{ display: (recipePanelVisible) ? "flex" : "none" }}>
+			<div 
+				id="recipePanel" className="recipe_panel outline" 
+				style={{ 
+					display: (recipePanelVisible) ? "flex" : "none",
+					width: "85vw",
+				}}
+			>
 				{
 					recipeSuccessfullyGenerated ? 
 					<div>
