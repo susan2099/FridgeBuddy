@@ -143,83 +143,127 @@ export default function Fridge() {
 	}
 
 	return (
-		<>
+		<div style={{
+			height: "calc(100dvh - 4rem)",
+			display: "flex",
+			flexDirection: "column",
+			overflow: "hidden",
+		}}>
 		{
 			// ********************************
 			// MAIN FRIDGE TABLE
 			// ********************************
 		}
-			<>
-				<h1>Your Fridge</h1>
-				<div>
-					<table id="fridgeTable" style={{
-						margin:"auto",
-						minWidth: "40vw",
-						maxWidth: "85vw",
-						border: "1px solid",
-						// borderCollapse: "collapse",
-						borderRadius: "16px",
-						borderSpacing: "0px",
-						tableLayout: "auto",
+			<section style={{
+				flex: "1 1 auto",
+				display: "flex",
+				flexDirection: "column",
+				minHeight: "0",
+			}}>
+				<h1 style={{ margin: "0 0 16px"}}>Your Fridge</h1>
+				<div style={{
+					flex: "1 1 auto",
+					width: "min(85vw, 95%)",
+					margin: "0 auto",
+					border: "1px solid",
+					borderRadius: "16px",
+					overflow: "hidden",
+				}}>
+					<div style={{
+						maxHeight: "100%",
+						overflow: "auto",
 					}}>
-						<thead>
-							<tr>
-								<th style={{
-									borderBottom: "1px solid",
-									padding: "8px",
-									minWidth: "15%",
-								}}></th>
-								<th style={{
-									borderBottom: "1px solid",
-									padding: "8px"
-								}}>Item</th>
-								<th style={{
-									borderBottom: "1px solid",
-									padding: "8px"
-								}}>Quantity</th>
-								<th style={{
-									borderBottom: "1px solid",
-									padding: "8px"
-								}}>Allergen(s)</th>
-								<th style={{
-									borderBottom: "1px solid",
-									padding: "8px"
-								}}>Expiration Date</th>
-							</tr>
-						</thead>
-						<tbody>
-							{
-								fridgeData.map((item:fridgeItem) => (
-									<tr>
-										<td style={{
-										}}> { /* buttons, icons... */ }
-											<button
-												className="edit_button" 
-												type="button"
-											>
-											</button>
+						<table id="fridgeTable" style={{
+							width: "100%",
+							minWidth: "40vw",
+							// borderCollapse: "collapse",
+							borderRadius: "10px",
+							borderSpacing: "0px",
+							tableLayout: "auto",
+						}}>
+							<thead>
+								<tr>
+									<th style={{
+										borderBottom: "1px solid",
+										padding: "8px",
+										minWidth: "15%",
+										position: "sticky",
+										top: "0",
+										background: "var(--bg-color)",
+										zIndex: 1,
+									}}></th>
+									<th style={{
+										borderBottom: "1px solid",
+										padding: "8px",
+										position: "sticky",
+										top: "0",
+										background: "var(--bg-color)",
+										zIndex: 1,
+									}}>Item</th>
+									<th style={{
+										borderBottom: "1px solid",
+										padding: "8px",
+										position: "sticky",
+										top: "0",
+										background: "var(--bg-color)",
+										zIndex: 1,
+									}}>Quantity</th>
+									<th style={{
+										borderBottom: "1px solid",
+										padding: "8px",
+										position: "sticky",
+										top: "0",
+										background: "var(--bg-color)",
+										zIndex: 1,
+									}}>Allergen(s)</th>
+									<th style={{
+										borderBottom: "1px solid",
+										padding: "8px",
+										position: "sticky",
+										top: "0",
+										background: "var(--bg-color)",
+										zIndex: 1,
+									}}>Expiration Date</th>
+								</tr>
+							</thead>
+							<tbody>
+								{
+									fridgeData.map((item:fridgeItem) => (
+										<tr>
+											<td style={{
+											}}> { /* buttons, icons... */ }
+												<button
+													className="edit_button" 
+													type="button"
+												>
+												</button>
 
-											<button
-												className="delete_button" 
-												type="button"
-											>
-											</button>
-										</td>
-										<td>{item.name}</td>
-										<td style={{textAlign: "center"}}>{item.quantity} {item.unit}</td>
-										<td style={{textAlign: "center"}}>{item.allergens}</td>
-										<td>{
-											(item.expiry) ? seconds_to_string_date(item.expiry["_seconds"]) : ""
-										}</td>
-									</tr>
-								))
-							}
-						</tbody>
-					</table>
+												<button
+													className="delete_button" 
+													type="button"
+												>
+												</button>
+											</td>
+											<td>{item.name}</td>
+											<td style={{textAlign: "center"}}>{item.quantity} {item.unit}</td>
+											<td style={{textAlign: "center"}}>{item.allergens}</td>
+											<td>{
+												(item.expiry) ? seconds_to_string_date(item.expiry["_seconds"]) : ""
+											}</td>
+										</tr>
+									))
+								}
+							</tbody>
+						</table>
+					</div>
 				</div>
-			</>
+			</section>
 
-			<hr></hr>
+			<hr style={{
+				width: "min(85vw, 100%)",
+				flex: "0 0 auto",
+				margin: "16px auto 12px",
+			}}></hr>
 
 		{
 			// *********************************************
@@ -227,19 +271,25 @@ export default function Fridge() {
 			// *********************************************
 		}
 
-			<div>
+			<div style={{
+				flex: "0 0 auto",
+				display: "flex",
+				flexDirection: "column",
+				alignItems: "center",
+				gap: "8px",
+			}}>
 				<button style={{
 							display:"block", 
-							margin:"2px auto"
+							margin:"0 auto"
 						}} 
 						onClick={() => {
 							setManualInputVisibility(true);
 						}}
-				>Add (+) (Manual)</button><br/>
+				>Add (+) (Manual)</button>
 				
 				<button style={{
 							display:"block", 
-							margin:"2px auto"
+							margin:"0 auto"
 						}} 
 						onClick={async () => {
 							const savedImage = await addNewToGallery();
@@ -247,23 +297,23 @@ export default function Fridge() {
 							const results = await receipt_scan(savedImage);
 							handleReceiptScanResults(results);
 						}}
-				>Add (+) (Take a picture)</button><br/>
+				>Add (+) (Take a picture)</button>
 				
 				<button style={{
 							display:"block", 
-							margin:"2px auto"
+							margin:"0 auto"
 						}}
 						onClick={() => {
 
 						}}
-				>Add (+) (Upload from gallery)</button><br/>
+				>Add (+) (Upload from gallery)</button>
 
 				<button style={{
 							display:"block", 
-							margin:"2px auto"
+							margin:"0 auto"
 						}}
 						onClick={handleGetExpiryAlert}
-				>Get expiry alert (Demo only)</button><br/>
+				>Get expiry alert (Demo only)</button>
 
 				<Link to="/">
 					<button style={{display:"block", margin:"auto"}}>Back</button>
@@ -391,6 +441,6 @@ export default function Fridge() {
 					<button>Submit</button>
 				</form>
 			</div>
-		</>
+		</div>
   	)
 }
