@@ -24,6 +24,44 @@ export class FirestoreUserPreferenceRepository extends UserPreferenceRepository 
         };
     }
 
+    async getList({ userId, type }) {
+        const doc = await this.collection(userId).doc(type).get();
+
+        if (!doc.exists) {
+            return {
+                userId,
+                type,
+                items: [],
+                updatedAt: null,
+            };
+        }
+
+        const data = doc.data();
+        return {
+            userId,
+            type,
+            items: Array.isArray(data.items) ? data.items : [],
+            updatedAt: data.updatedAt ?? null,
+        };
+    }
+
+    async getAllByUserId(userId) {
+        const [preference, allergen] = await Promise.all([
+            this.getList({ userId, type: 'preference' }),
+            this.getList({ userId, type: 'allergen' }),
+        ]);
+
+        return {
+            userId,
+            preference: preference.items,
+            allergen: allergen.items,
+            updatedAt: {
+                preference: preference.updatedAt,
+                allergen: allergen.updatedAt,
+            },
+        };
+    }
+
     collection(userId) {
         return this.db
             .collection('users')

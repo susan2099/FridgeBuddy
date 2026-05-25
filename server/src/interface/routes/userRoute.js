@@ -6,6 +6,7 @@ export function buildUserRouter(userController) {
     }
 
     const router = express.Router();
+    router.get('/preferences', userController.getPreferences);
     router.post('/preference', userController.savePreference);
     router.post('/allergen', userController.saveAllergen);
     return router;

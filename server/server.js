@@ -31,6 +31,7 @@ import { FcmController } from "./src/interface/controllers/FcmController.js";
 import { buildFcmRouter } from "./src/interface/routes/fcmRoute.js";
 import { FirestoreUserPreferenceRepository } from "./src/data/user/FirestoreUserPreferenceRepository.js";
 import { SaveUserPreferenceListUseCase } from "./src/app/usecases/user/SaveUserPreferenceListUseCase.js";
+import { GetUserPreferenceListUseCase } from "./src/app/usecases/user/GetUserPreferenceListUseCase.js";
 import { UserController } from "./src/interface/controllers/UserController.js";
 import { buildUserRouter } from "./src/interface/routes/userRoute.js";
 
@@ -79,7 +80,11 @@ async function fridgeBuddyBootstrap() {
     // User preferences setup
     const userPreferenceRepository = new FirestoreUserPreferenceRepository({ db });
     const saveUserPreferenceListUseCase = new SaveUserPreferenceListUseCase({ userPreferenceRepository });
-    const userController = new UserController({ saveUserPreferenceListUseCase });
+    const getUserPreferenceListUseCase = new GetUserPreferenceListUseCase({ userPreferenceRepository });
+    const userController = new UserController({
+        saveUserPreferenceListUseCase,
+        getUserPreferenceListUseCase
+    });
 
     app.use('/api', buildRecipeRouter(recipeController));
     app.use('/api/fridge', buildFridgeRouter(fridgeController));
