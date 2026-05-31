@@ -27,7 +27,7 @@ dist-ssr
 .gradle/
 
 client/FridgeBuddy/android/
-# client/FridgeBuddy/eslint.config.js
+# client/FridgeBuddy/eslint.config.js	
 # client/FridgeBuddy/tsconfig.app.json
 # client/FridgeBuddy/tsconfig.json
 # client/FridgeBuddy/tsconfig.node.json
