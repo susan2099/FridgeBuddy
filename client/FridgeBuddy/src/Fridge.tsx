@@ -156,14 +156,14 @@ export default function Fridge() {
 			// ********************************
 		}
 			<section style={{
-				flex: "1 1 auto",
+				flex: "0 0 auto",
 				display: "flex",
 				flexDirection: "column",
 				minHeight: "0",
 			}}>
 				<h1 style={{ margin: "0 0 16px"}}>Your Fridge</h1>
 				<div style={{
-					flex: "1 1 auto",
+					flex: "0 0 auto",
 					width: "min(85vw, 95%)",
 					margin: "0 auto",
 					border: "1px solid",
