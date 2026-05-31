@@ -16,9 +16,9 @@ function Home() {
 				<Link to='/prefs' className='flexbox'>
 					<button>Preferences</button>
 				</Link>
-				<Link to='/settings' className='flexbox'>
+				{/* <Link to='/settings' className='flexbox'>
 					<button>Settings</button>
-				</Link>
+				</Link> */}
 			</div>
 		</>
 	)

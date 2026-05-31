@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import {Link} from 'react-router-dom';
-import {load_fridge_data, save_to_fridge, receipt_scan } from './scripts/FridgeManager';
+import {load_fridge_data, save_to_fridge, receipt_scan, delete_fridge_item } from './scripts/FridgeManager';
 import { usePhotoGallery } from './hooks/usePhotoGallery';
 import { seconds_to_string_date } from './scripts/Helpers.ts';
 import { sendTestNotification } from './fcm.ts';
 
 export type fridgeItem = {
+	id: string,
 	name: string,
 	quantity: number,
 	unit: string,
@@ -230,8 +231,7 @@ export default function Fridge() {
 								{
 									fridgeData.map((item:fridgeItem) => (
 										<tr>
-											<td style={{
-											}}> { /* buttons, icons... */ }
+											<td style={{}}> { /* buttons, icons... */ }
 												<button
 													className="edit_button" 
 													type="button"
@@ -241,6 +241,7 @@ export default function Fridge() {
 												<button
 													className="delete_button" 
 													type="button"
+													onClick={() => {delete_fridge_item(item.id); }}
 												>
 												</button>
 											</td>

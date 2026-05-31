@@ -1,14 +1,25 @@
-import { load_firebase, add_firebase } from './DBManager';
+import { load_firebase, add_firebase, remove_firebase } from './DBManager';
 import { buildBackendUrl } from '../utils/backend';
 // import { type UserPhoto } from '../hooks/usePhotoGallery';
+import { TEST_USER } from './CONSTS';
 
 // temp
 import { type fridgeItem } from '../Fridge';
 
 export async function load_fridge_data() {
 	// change this to userID variable later
-	return await load_firebase("test-user-1");
+	return await load_firebase(TEST_USER);
 }
+
+export async function delete_fridge_item(id:string) {
+	return await remove_firebase(TEST_USER, id);
+}
+
+// delete ALL
+export async function delete_fridge_data() {
+
+}
+
 
 export async function save_to_fridge(items: Array<fridgeItem>) {
 	for (const item of items) {

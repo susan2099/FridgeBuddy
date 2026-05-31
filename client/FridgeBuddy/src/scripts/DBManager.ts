@@ -95,7 +95,7 @@ export async function load_firebase(userId:string) : Promise<Record<string, any>
 
 	if(response.ok) {
 		const data = await response.json();
-		// console.log(JSON.stringify(data.data));
+		console.log(JSON.stringify(data.data));
 		return data.data;
 	} else {
 		console.log("fail load firebase");
@@ -128,14 +128,15 @@ export async function add_firebase(userId:string, name:string, quantity:number, 
 	}
 }
 
-export async function remove_firebase(userId:string, id:string) {
+export async function remove_firebase(userId:string, itemId:string) {
 	const response = await fetch(buildBackendUrl("api/fridge/delete"), {
 		method: "POST",
 		headers: {
 			"Content-Type": "applications/json"
 		},
 		body: JSON.stringify({
-
+			"userId": userId,
+			"itemId": itemId
 		})
 	});
 

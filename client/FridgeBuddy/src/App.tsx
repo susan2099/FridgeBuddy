@@ -4,7 +4,7 @@ import Home from './Home.tsx'
 import Fridge from './Fridge.tsx'
 import Recipes from './Recipes.tsx'
 import Preferences from './Preferences.tsx'
-import Settings from './Settings.tsx'
+// import Settings from './Settings.tsx'
 import { useEffect } from 'react';
 import { registerPushNotifications } from './registerPushNotifications.ts';
 
@@ -20,7 +20,7 @@ function App() {
           <Route path="/fridge" element={<Fridge />}/>
           <Route path="/recipes" element={<Recipes />}/>
           <Route path="/prefs" element={<Preferences />}/>
-          <Route path="/settings" element={<Settings />}/>
+          {/* <Route path="/settings" element={<Settings />}/> */}
         </Routes>
     </>
   )
