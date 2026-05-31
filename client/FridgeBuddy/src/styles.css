@@ -94,7 +94,7 @@
 }
 
 .edit_button {
-  background-image: url("assets\edit_button.png");
+  background-image: url("assets/edit_button.png");
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
@@ -105,7 +105,7 @@
 }
 
 .delete_button {
-  background-image: url("assets\x.png");
+  background-image: url("assets/x.png");
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;

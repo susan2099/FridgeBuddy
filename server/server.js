@@ -29,6 +29,11 @@ import { FirestoreFcmTokenRepository } from "./src/data/fcm/FirestoreFcmTokenRep
 import { FcmUseCase } from "./src/app/usecases/fcm/FcmUseCase.js";
 import { FcmController } from "./src/interface/controllers/FcmController.js";
 import { buildFcmRouter } from "./src/interface/routes/fcmRoute.js";
+import { FirestoreUserPreferenceRepository } from "./src/data/user/FirestoreUserPreferenceRepository.js";
+import { SaveUserPreferenceListUseCase } from "./src/app/usecases/user/SaveUserPreferenceListUseCase.js";
+import { GetUserPreferenceListUseCase } from "./src/app/usecases/user/GetUserPreferenceListUseCase.js";
+import { UserController } from "./src/interface/controllers/UserController.js";
+import { buildUserRouter } from "./src/interface/routes/userRoute.js";
 
 import cors from 'cors';
 
@@ -72,10 +77,20 @@ async function fridgeBuddyBootstrap() {
     const fcmUseCase = new FcmUseCase({ fcmMessageGateway, fcmTokenRepository });
     const fcmController = new FcmController({ fcmUseCase });
 
+    // User preferences setup
+    const userPreferenceRepository = new FirestoreUserPreferenceRepository({ db });
+    const saveUserPreferenceListUseCase = new SaveUserPreferenceListUseCase({ userPreferenceRepository });
+    const getUserPreferenceListUseCase = new GetUserPreferenceListUseCase({ userPreferenceRepository });
+    const userController = new UserController({
+        saveUserPreferenceListUseCase,
+        getUserPreferenceListUseCase
+    });
+
     app.use('/api', buildRecipeRouter(recipeController));
     app.use('/api/fridge', buildFridgeRouter(fridgeController));
     app.use('/api/scanner', buildScannerRouter(scannerController));
     app.use('/api/fcm', buildFcmRouter(fcmController));
+    app.use('/api/user', buildUserRouter(userController));
     app.use(errorMiddleware);
 
     const PORT = process.env.PORT || 3000;
