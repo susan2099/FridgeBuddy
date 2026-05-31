@@ -4,8 +4,14 @@ import Home from './Home.tsx'
 import Fridge from './Fridge.tsx'
 import Recipes from './Recipes.tsx'
 import Preferences from './Preferences.tsx'
+import { useEffect } from 'react';
+import { registerPushNotifications } from './registerPushNotifications.ts';
 
 function App() {
+  useEffect(() => {
+    return registerPushNotifications();
+  }, []);
+
   return (
     <>
         <Routes>

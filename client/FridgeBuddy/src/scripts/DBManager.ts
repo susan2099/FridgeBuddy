@@ -1,4 +1,5 @@
 import { parse } from 'yaml' // https://eemeli.org/yaml/#parse-amp-stringify
+import { buildBackendUrl } from '../utils/backend';
 
 export async function print_db(db_name:string, table_name:string) {
 	const db = await open_db(db_name, [table_name]);
@@ -82,7 +83,7 @@ async function save_to_db(db_name:string, table_name:string, data:Array<Record<s
 }
 
 export async function load_firebase(userId:string) : Promise<Record<string, any>|boolean> {
-	const response = await fetch("http://localhost:3000/api/fridge/get", {
+	const response = await fetch(buildBackendUrl("/api/fridge/get"), {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json"
@@ -104,7 +105,7 @@ export async function load_firebase(userId:string) : Promise<Record<string, any>
 
 // expiry must be a valid date string
 export async function add_firebase(userId:string, name:string, quantity:number, unit:string, expiry:Record<string, any>|null, allergens:Array<string>) {
-	const response = await fetch("http://localhost:3000/api/fridge/add", {
+	const response = await fetch(buildBackendUrl("/api/fridge/add"), {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json"

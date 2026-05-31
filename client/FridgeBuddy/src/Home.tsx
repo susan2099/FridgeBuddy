@@ -10,12 +10,12 @@ function Home() {
         <Link to="/fridge" className='flexbox'>
           <button>Your Fridge</button>
         </Link>
-		<Link to='/recipes' className='flexbox'>
-        	<button>Get Recipes</button>
-		</Link>
-		<Link to='/prefs' className='flexbox'>
-	        <button>Preferences</button>
-		</Link>
+        <Link to='/recipes' className='flexbox'>
+              <button>Get Recipes</button>
+        </Link>
+        <Link to='/prefs' className='flexbox'>
+              <button>Preferences</button>
+        </Link>
       </div>
     </>
   )

@@ -1,5 +1,6 @@
 import { load_fridge_data } from "./FridgeManager";
 import { type Pref, load_prefs } from "./PrefManager";
+import { buildBackendUrl } from "../utils/backend";
 
 export async function request_recipe(additionalInfo: string) {
 	const ingredients = await load_fridge_data() as Array<string>;
@@ -16,7 +17,7 @@ export async function request_recipe(additionalInfo: string) {
 
 	// in-browser: localhost is OK
 	// emulator: use a LAN IP
-	const response = await fetch("http://localhost:3000/api/recipe", {
+	const response = await fetch(buildBackendUrl("/api/recipe"), {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json"
@@ -39,5 +40,4 @@ export async function request_recipe(additionalInfo: string) {
 		return false;
 	}
 }
-
 

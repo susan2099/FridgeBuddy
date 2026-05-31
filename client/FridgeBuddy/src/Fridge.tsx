@@ -3,6 +3,7 @@ import {Link} from 'react-router-dom';
 import {load_fridge_data, save_to_fridge, receipt_scan } from './scripts/FridgeManager';
 import { usePhotoGallery } from './hooks/usePhotoGallery';
 import { seconds_to_string_date } from './scripts/Helpers.ts';
+import { sendTestNotification } from './fcm.ts';
 
 export type fridgeItem = {
 	name: string,
@@ -11,6 +12,32 @@ export type fridgeItem = {
 	expiry: Record<string, any>,
 	allergens: Array<string>,
 	createdAt: Date,
+}
+
+const EXPIRY_ALERT_WINDOW_DAYS = 20;
+const DEMO_NOTIFICATION_DELAY_MS = 5000;
+
+function sleep(ms: number) {
+	return new Promise((resolve) => {
+		window.setTimeout(resolve, ms);
+	});
+}
+
+function getExpiryDate(expiry: fridgeItem["expiry"] | string | null | undefined) {
+	if(!expiry) {
+		return null;
+	}
+
+	if(typeof expiry === "string") {
+		const parsedDate = new Date(expiry);
+		return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+	}
+
+	if(typeof expiry["_seconds"] === "number") {
+		return new Date(expiry["_seconds"] * 1000);
+	}
+
+	return null;
 }
 
 // type ReceiptScanFridgeItem = {
@@ -84,6 +111,35 @@ export default function Fridge() {
 		));
 
 		setReceiptScanResults(fridgeItemResults);
+	}
+
+	async function handleGetExpiryAlert() {
+		await sleep(DEMO_NOTIFICATION_DELAY_MS);
+
+		const data = await load_fridge_data();
+
+		if(!Array.isArray(data)) {
+			alert("Could not load fridge items for expiry alerts.");
+			return;
+		}
+
+		const now = Date.now();
+		const alertWindowEnd = now + EXPIRY_ALERT_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+		const expiringItems = data.filter((item) => {
+			const expiryDate = getExpiryDate(item.expiry);
+			if(!expiryDate) {
+				return false;
+			}
+
+			const expiryTime = expiryDate.getTime();
+			return expiryTime >= now && expiryTime <= alertWindowEnd;
+		});
+
+		const body = expiringItems.length
+			? `${expiringItems.map((item) => item.name).join(", ")} will expire within ${EXPIRY_ALERT_WINDOW_DAYS} days.`
+			: `No fridge items will expire within ${EXPIRY_ALERT_WINDOW_DAYS} days.`;
+
+		await sendTestNotification("FridgeBuddy Expiry Alert", body);
 	}
 
 	return (
@@ -201,6 +257,13 @@ export default function Fridge() {
 
 						}}
 				>Add (+) (Upload from gallery)</button><br/>
+
+				<button style={{
+							display:"block", 
+							margin:"2px auto"
+						}}
+						onClick={handleGetExpiryAlert}
+				>Get expiry alert (Demo only)</button><br/>
 
 				<Link to="/">
 					<button style={{display:"block", margin:"auto"}}>Back</button>

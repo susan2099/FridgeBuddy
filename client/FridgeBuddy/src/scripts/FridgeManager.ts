@@ -1,4 +1,5 @@
 import { load_firebase, add_firebase } from './DBManager';
+import { buildBackendUrl } from '../utils/backend';
 // import { type UserPhoto } from '../hooks/usePhotoGallery';
 
 // temp
@@ -38,7 +39,7 @@ export async function receipt_scan(photo: Record<string, any>) {
 	const formData = new FormData();
 	formData.append("img", blob, "receipt.jpg");
 
-	const result = await fetch("http://localhost:3000/api/scanner/receipt", {
+	const result = await fetch(buildBackendUrl("/api/scanner/receipt"), {
 		method: "POST",
 		body: formData
 	});
