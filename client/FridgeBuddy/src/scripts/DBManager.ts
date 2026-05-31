@@ -127,3 +127,22 @@ export async function add_firebase(userId:string, name:string, quantity:number, 
 		console.log("fail add firebase");
 	}
 }
+
+export async function remove_firebase(userId:string, id:string) {
+	const response = await fetch(buildBackendUrl("api/fridge/delete"), {
+		method: "POST",
+		headers: {
+			"Content-Type": "applications/json"
+		},
+		body: JSON.stringify({
+
+		})
+	});
+
+	if(response.ok) {
+		const data = await response.json();
+		console.log(JSON.stringify(data));
+	} else {
+		console.log("fail delete firebase");
+	}
+}
