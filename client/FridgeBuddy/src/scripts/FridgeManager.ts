@@ -23,8 +23,11 @@ export async function delete_fridge_data() {
 
 export async function save_to_fridge(items: Array<fridgeItem>) {
 	for (const item of items) {
-		add_firebase(
-			"test-user-1",
+		console.log(JSON.stringify(item));
+		console.log(typeof(item.quantity), item.quantity);
+
+		await add_firebase(
+			TEST_USER,
 			item.name,
 			item.quantity,
 			item.unit,

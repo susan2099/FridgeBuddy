@@ -95,7 +95,7 @@ export async function load_firebase(userId:string) : Promise<Record<string, any>
 
 	if(response.ok) {
 		const data = await response.json();
-		console.log(JSON.stringify(data.data));
+		// console.log(JSON.stringify(data.data));
 		return data.data;
 	} else {
 		console.log("fail load firebase");
@@ -105,6 +105,14 @@ export async function load_firebase(userId:string) : Promise<Record<string, any>
 
 // expiry must be a valid date string
 export async function add_firebase(userId:string, name:string, quantity:number, unit:string, expiry:Record<string, any>|null, allergens:Array<string>) {
+	// console.log(buildBackendUrl("/api/fridge/add"));
+	console.log(JSON.stringify({
+			"userId": userId,
+			"name": name,
+			"quantity": quantity,
+			"unit": unit,
+			"expiry": expiry,
+			"allergens": allergens}));
 	const response = await fetch(buildBackendUrl("/api/fridge/add"), {
 		method: "POST",
 		headers: {

@@ -79,9 +79,11 @@ export default function Fridge() {
 	function onSubmitManualEntry() {
 		const fridgeIng = [{
 			name: formData.name,
-			quantity: "" + formData.quantity + " " + formData.unit,
-			expiry: JSON.stringify(formData.expiry),
-			addedAt: JSON.stringify(formData.expiry) // TODO: or maybe Date.now()?
+			quantity: parseFloat(formData.quantity as unknown as string),
+			unit: (formData.unit !== "") ? formData.unit : null,
+			expiry: (formData.expiry !== "") ? formData.expiry : null,
+			allergens: formData.allergens,
+			createdAt: Date.now() // TODO: or maybe Date.now()?
 		}] as unknown as Array<fridgeItem>;
 
 		save_to_fridge(fridgeIng);
