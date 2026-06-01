@@ -35,7 +35,7 @@ export async function request_recipe(additionalInfo: string) {
 			"Content-Type": "application/json"
 		},
 		body: JSON.stringify({
-			"dish": additionalInfo,
+			"dish": additionalInfo.trim() == "" ? "anything" : additionalInfo.trim(),
 			"servings": 1,
 			"ingredients": ingredients,
 			"avoidAllergens": prefs.avoidAllergens,

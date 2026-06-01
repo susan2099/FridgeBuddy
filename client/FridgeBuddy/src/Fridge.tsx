@@ -116,7 +116,6 @@ export default function Fridge() {
 				await update_fridge(fridgeIng[0]);
 			}
 			setFridgeData(await load_fridge_data() as Array<fridgeItem>);
-			await save_to_fridge(fridgeIng);
 			setManualInputVisibility(false);
 			
 			// remove the old inputs
@@ -508,7 +507,7 @@ export default function Fridge() {
 					}}
 			>
 				<form id="manualInsertForm" onSubmit={() => {onSubmitManualEntry(formData.id); setManualInputVisibility(false);}}>
-					<h1>{(manualInputType == ("Add" as ManualInputType)) ? "Add New Item" : "Edit item"}</h1>
+					<h2>{(manualInputType == ("Add" as ManualInputType)) ? "Add New Item" : "Edit item"}</h2>
 					<label id="itemNameLabel">Item Name </label>
 					<input type="text" id="itemName" name="name" value={formData.name} onChange={handleManualInputFormChange}></input><br/>
 
