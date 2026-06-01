@@ -116,6 +116,19 @@ export default function Fridge() {
 				await update_fridge(fridgeIng[0]);
 			}
 			setFridgeData(await load_fridge_data() as Array<fridgeItem>);
+			await save_to_fridge(fridgeIng);
+			setManualInputVisibility(false);
+			
+			// remove the old inputs
+			setFormData({
+				id:"",
+				name:"", 
+				quantity:0,
+				unit:"",
+				expiry:"",
+				allergens:Array<string>(),
+				createdAt:new Date(),
+			});
 		} catch (error) {
 			console.error("Failed to save fridge item:", error);
 		}
