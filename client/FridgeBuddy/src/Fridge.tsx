@@ -251,7 +251,7 @@ export default function Fridge() {
 							<tbody>
 								{
 									fridgeData.map((item:fridgeItem) => (
-										<tr>
+										<tr key={item.id}>
 											<td style={{}}> { /* buttons, icons... */ }
 												<button
 													className="edit_button" 
