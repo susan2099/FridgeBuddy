@@ -14,6 +14,7 @@ export function usePhotoGallery() {
 		const capturedPhoto = await Camera.getPhoto({
 			resultType: CameraResultType.DataUrl,
 			source: CameraSource.Camera,
+			// source: CameraSource.Prompt,
 			quality: 100,
 		});
 

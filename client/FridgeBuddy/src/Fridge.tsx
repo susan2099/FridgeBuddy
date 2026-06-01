@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import {Link} from 'react-router-dom';
-import {load_fridge_data, save_to_fridge, receipt_scan } from './scripts/FridgeManager';
+import {load_fridge_data, save_to_fridge, receipt_scan, delete_fridge_item } from './scripts/FridgeManager';
 import { usePhotoGallery } from './hooks/usePhotoGallery';
 import { sendTestNotification } from './fcm.ts';
 
 export type fridgeItem = {
+	id: string,
 	name: string,
 	quantity: number,
 	unit: string,
@@ -93,8 +94,8 @@ export default function Fridge() {
 	async function onSubmitManualEntry() {
 		const fridgeIng = [{
 			name: formData.name,
-			quantity: formData.quantity,
-			unit: formData.unit,
+			quantity: parseFloat(formData.quantity as unknown as string),
+			unit: (formData.unit !== "") ? formData.unit : null,
 			allergens: formData.allergens,
 			expiry: formData.expiry ? new Date(formData.expiry) : null,
 			createdAt: new Date(),
@@ -251,8 +252,7 @@ export default function Fridge() {
 								{
 									fridgeData.map((item:fridgeItem) => (
 										<tr>
-											<td style={{
-											}}> { /* buttons, icons... */ }
+											<td style={{}}> { /* buttons, icons... */ }
 												<button
 													className="edit_button" 
 													type="button"
@@ -262,6 +262,7 @@ export default function Fridge() {
 												<button
 													className="delete_button" 
 													type="button"
+													onClick={() => {delete_fridge_item(item.id); }}
 												>
 												</button>
 											</td>
@@ -438,24 +439,44 @@ export default function Fridge() {
 				</div>
 			</div>
 
-			<div id="manualInsert" className="popup outline" style={{ display: (manualInputVisible) ? "flex" : "none" }}>
+			<div	id="manualInsert" 
+					className="popup outline" 
+					style={{ 
+						display: (manualInputVisible) ? "flex" : "none",
+						// width: "50vw",
+					}}
+			>
 				<form id="manualInsertForm" onSubmit={onSubmitManualEntry}>
 					<label id="itemNameLabel">Item Name </label>
 					<input type="text" id="itemName" name="name" value={formData.name} onChange={handleManualInputFormChange}></input><br/>
 
 					<label id="itemQtyLabel">Quantity </label>
-					<input type="number" id="itemQty" name="quantity" value={formData.quantity} onChange={handleManualInputFormChange}></input>
+					<input	type="number" 
+							id="itemQty" 
+							name="quantity" 
+							value={formData.quantity} 
+							onChange={handleManualInputFormChange}
+							style={{
+								width:"15%",
+							}}
+					>
+					</input>
 					<input 
 						type="text" name="unit" value={formData.unit} onChange={handleManualInputFormChange} 
-						placeholder="unit (eg: kg, lbs, L, cups, etc)">
+						placeholder="unit (eg: kg, lbs, L, cups, etc)"
+						style={{
+							width:"50%",
+						}}
+					>	
 					</input><br/>
 					
 					<label id="itemExpiryLabel">Expiration Date </label>
 					<input type="date" name="expiry" value={formData.expiry} onChange={handleManualInputFormChange}></input><br/>
 
 					<label id="itemAllergensLabel">Allergens </label>
-					<input type=""></input><br/> <button type="button">+</button> { /* TODO: need to add a way to add many allergens, and a way to remove/edit them. */ }
+					<input type="" placeholder="none"></input><br/> <button type="button">+</button> { /* TODO: need to add a way to add many allergens, and a way to remove/edit them. */ }
 
+					<br/>
 					<button type="button" onClick={() => {setManualInputVisibility(false);}}>Cancel</button>
 					<button>Submit</button>
 				</form>
