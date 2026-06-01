@@ -97,10 +97,12 @@ export default function Fridge() {
 	}
 
 	async function onSubmitManualEntry(itemId: string | null) {
+		event?.preventDefault();
+
 		const fridgeIng = [{
 			id: itemId,
 			name: formData.name,
-			quantity: formData.quantity,
+			quantity: parseFloat(formData.quantity as unknown as string),
 			unit: (formData.unit !== "") ? formData.unit : null,
 			allergens: formData.allergens,
 			expiry: formData.expiry,
@@ -113,12 +115,15 @@ export default function Fridge() {
 			} else {
 				await update_fridge(fridgeIng[0]);
 			}
+			setFridgeData(await load_fridge_data() as Array<fridgeItem>);
 		} catch (error) {
 			console.error("Failed to save fridge item:", error);
 		}
 	}
 
 	async function handleEditFridgeItem(itemId: string) {
+		event?.preventDefault();
+
 		// find item
 		const item = fridgeData.filter((fridgeItem) => fridgeItem.id == itemId)[0];
 
@@ -489,7 +494,7 @@ export default function Fridge() {
 						// width: "50vw",
 					}}
 			>
-				<form id="manualInsertForm" onSubmit={() => {onSubmitManualEntry(formData.id);}}>
+				<form id="manualInsertForm" onSubmit={() => {onSubmitManualEntry(formData.id); setManualInputVisibility(false);}}>
 					<h1>{(manualInputType == ("Add" as ManualInputType)) ? "Add New Item" : "Edit item"}</h1>
 					<label id="itemNameLabel">Item Name </label>
 					<input type="text" id="itemName" name="name" value={formData.name} onChange={handleManualInputFormChange}></input><br/>
