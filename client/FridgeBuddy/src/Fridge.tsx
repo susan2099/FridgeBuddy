@@ -108,6 +108,20 @@ export default function Fridge() {
 		}
 	}
 
+	async function handleDeleteFridgeItem(item: fridgeItem) {
+		const confirmed = window.confirm(`Delete ${item.name} from your fridge?`);
+		if(!confirmed) {
+			return;
+		}
+
+		try {
+			await delete_fridge_item(item.id);
+			setFridgeData(await load_fridge_data() as Array<fridgeItem>);
+		} catch (error) {
+			console.error("Failed to delete fridge item:", error);
+		}
+	}
+
 	function handleManualInputFormChange(event:any) {
 		const { name, value } = event.target;
 		setFormData((prevFormData) => ({... prevFormData, [name]: value}));
@@ -262,7 +276,7 @@ export default function Fridge() {
 												<button
 													className="delete_button" 
 													type="button"
-													onClick={() => {delete_fridge_item(item.id); }}
+													onClick={() => {handleDeleteFridgeItem(item); }}
 												>
 												</button>
 											</td>
