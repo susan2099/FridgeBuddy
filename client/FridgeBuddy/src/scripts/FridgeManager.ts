@@ -1,4 +1,4 @@
-import { load_firebase, add_firebase, remove_firebase } from './DBManager';
+import { load_firebase, add_firebase, update_firebase, remove_firebase } from './DBManager';
 import { buildBackendUrl } from '../utils/backend';
 // import { type UserPhoto } from '../hooks/usePhotoGallery';
 import { TEST_USER } from './CONSTS';
@@ -38,9 +38,8 @@ export async function delete_fridge_item(id:string) {
 
 // delete ALL
 export async function delete_fridge_data() {
-
+	
 }
-
 
 export async function save_to_fridge(items: Array<fridgeItem>) {
 	for (const item of items) {
@@ -53,8 +52,18 @@ export async function save_to_fridge(items: Array<fridgeItem>) {
 			item.allergens
 		);
 	}
+}
 
-	// trigger a 'reload' of the page to visually update?
+export async function update_fridge(item: fridgeItem) {
+	await update_firebase(
+		TEST_USER,
+		item.id as string,
+		item.name,
+		item.quantity,
+		item.unit,
+		normalizeExpiryDate(item.expiry),
+		item.allergens,
+	);
 }
 
 export async function receipt_scan(photo: Record<string, any>) {
@@ -65,8 +74,6 @@ export async function receipt_scan(photo: Record<string, any>) {
 	const byteArray = Uint8Array.from(byteCharacters, c => c.charCodeAt(0));
 	
 	const blob = new Blob([byteArray], { type: "image/jpeg" });
-	// console.log(blob.size);
-	// console.log(blob.type);
 
 	const formData = new FormData();
 	formData.append("img", blob, "receipt.jpg");

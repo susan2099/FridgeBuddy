@@ -128,6 +128,31 @@ export async function add_firebase(userId:string, name:string, quantity:number, 
 	}
 }
 
+export async function update_firebase(userId:string, itemId:string, name:string, quantity:number, unit:string, expiry:Date|null, allergens:Array<string>) {
+	const response = await fetch(buildBackendUrl("/api/fridge/update"), {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json"
+		},
+		body: JSON.stringify({
+			"userId": userId,
+			"itemId": itemId,
+			"name": name,
+			"quantity": quantity,
+			"unit": unit,
+			"expiry": expiry,
+			"allergens": allergens
+		})
+	});
+
+	if(response.ok) {
+		const data = await response.json();
+		console.log(JSON.stringify(data));
+	} else {
+		console.log("fail update firebase");
+	}
+}
+
 export async function remove_firebase(userId:string, itemId:string) {
 	const response = await fetch(buildBackendUrl("api/fridge/delete"), {
 		method: "POST",

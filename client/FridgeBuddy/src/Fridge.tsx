@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import {Link} from 'react-router-dom';
-import {load_fridge_data, save_to_fridge, receipt_scan, delete_fridge_item } from './scripts/FridgeManager';
+import {load_fridge_data, save_to_fridge, update_fridge, receipt_scan, delete_fridge_item } from './scripts/FridgeManager';
 import { usePhotoGallery } from './hooks/usePhotoGallery';
 import { sendTestNotification } from './fcm.ts';
 
+type ManualInputType = "Add" | "Update";
+
 export type fridgeItem = {
-	id: string,
+	id: string|null,
 	name: string,
 	quantity: number,
 	unit: string,
@@ -66,14 +68,17 @@ export default function Fridge() {
 	const {photos, addNewToGallery, clearPhotos} = usePhotoGallery();
 	const [isVisible, setVisibility] = useState(false);
 	const [manualInputVisible, setManualInputVisibility] = useState(false);
+	const [manualInputType, setManualInputType] = useState<ManualInputType>("Add");
 
 	const [fridgeData, setFridgeData] = useState(Array<fridgeItem>());
-	const [formData, setFormData] = useState({
+	const [formData, setFormData] = useState<fridgeItem>({
+		id:null,
 		name:"", 
 		quantity:0, 
 		unit:"", 
 		expiry:"", 
-		allergens:Array<string>()
+		allergens:Array<string>(),
+		createdAt:new Date(),
 	});
 
 	const [receiptScanResults, setReceiptScanResults] = useState(Array<fridgeItem>());
@@ -91,21 +96,43 @@ export default function Fridge() {
 		setVisibility(prev => !prev);
 	}
 
-	async function onSubmitManualEntry() {
+	async function onSubmitManualEntry(itemId: string | null) {
 		const fridgeIng = [{
+			id: itemId,
 			name: formData.name,
 			quantity: formData.quantity,
 			unit: (formData.unit !== "") ? formData.unit : null,
 			allergens: formData.allergens,
-			expiry: formData.expiry ? new Date(formData.expiry) : null,
+			expiry: formData.expiry,
 			createdAt: new Date(),
 		}] as unknown as Array<fridgeItem>;
 
 		try {
-			await save_to_fridge(fridgeIng);
+			if(manualInputType === ("Add" as ManualInputType)) {
+				await save_to_fridge(fridgeIng);
+			} else {
+				await update_fridge(fridgeIng[0]);
+			}
 		} catch (error) {
 			console.error("Failed to save fridge item:", error);
 		}
+	}
+
+	async function handleEditFridgeItem(itemId: string) {
+		// find item
+		const item = fridgeData.filter((fridgeItem) => fridgeItem.id == itemId)[0];
+
+		setManualInputType("Update" as ManualInputType);
+		setFormData({
+			"id": itemId,
+			"name": item.name,
+			"quantity":item.quantity,
+			"unit":item.unit,
+			"expiry":JSON.stringify(item.expiry),
+			"allergens":item.allergens,
+		} as fridgeItem);
+		
+		setManualInputVisibility(true);
 	}
 
 	async function handleDeleteFridgeItem(item: fridgeItem) {
@@ -115,7 +142,7 @@ export default function Fridge() {
 		}
 
 		try {
-			await delete_fridge_item(item.id);
+			await delete_fridge_item(item.id as string);
 			setFridgeData(await load_fridge_data() as Array<fridgeItem>);
 		} catch (error) {
 			console.error("Failed to delete fridge item:", error);
@@ -265,11 +292,12 @@ export default function Fridge() {
 							<tbody>
 								{
 									fridgeData.map((item:fridgeItem) => (
-										<tr key={item.id}>
+										<tr key={item.id as string}>
 											<td style={{}}> { /* buttons, icons... */ }
 												<button
 													className="edit_button" 
 													type="button"
+													onClick={() => {handleEditFridgeItem(item.id as string);}}
 												>
 												</button>
 
@@ -317,6 +345,7 @@ export default function Fridge() {
 							margin:"0 auto"
 						}} 
 						onClick={() => {
+							setManualInputType("Add" as ManualInputType);
 							setManualInputVisibility(true);
 						}}
 				>Add (+) (Manual)</button>
@@ -460,7 +489,7 @@ export default function Fridge() {
 						// width: "50vw",
 					}}
 			>
-				<form id="manualInsertForm" onSubmit={onSubmitManualEntry}>
+				<form id="manualInsertForm" onSubmit={() => {onSubmitManualEntry(formData.id);}}>
 					<label id="itemNameLabel">Item Name </label>
 					<input type="text" id="itemName" name="name" value={formData.name} onChange={handleManualInputFormChange}></input><br/>
 
@@ -485,7 +514,7 @@ export default function Fridge() {
 					</input><br/>
 					
 					<label id="itemExpiryLabel">Expiration Date </label>
-					<input type="date" name="expiry" value={formData.expiry} onChange={handleManualInputFormChange}></input><br/>
+					<input type="date" name="expiry" value={formData.expiry as string} onChange={handleManualInputFormChange}></input><br/>
 
 					<label id="itemAllergensLabel">Allergens </label>
 					<input type="" placeholder="none"></input><br/> <button type="button">+</button> { /* TODO: need to add a way to add many allergens, and a way to remove/edit them. */ }
