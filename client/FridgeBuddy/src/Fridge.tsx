@@ -490,6 +490,7 @@ export default function Fridge() {
 					}}
 			>
 				<form id="manualInsertForm" onSubmit={() => {onSubmitManualEntry(formData.id);}}>
+					<h1>{(manualInputType == ("Add" as ManualInputType)) ? "Add New Item" : "Edit item"}</h1>
 					<label id="itemNameLabel">Item Name </label>
 					<input type="text" id="itemName" name="name" value={formData.name} onChange={handleManualInputFormChange}></input><br/>
 
