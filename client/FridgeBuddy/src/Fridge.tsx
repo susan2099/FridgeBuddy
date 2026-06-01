@@ -168,7 +168,8 @@ export default function Fridge() {
 
 	function handleManualInputFormChange(event:any) {
 		const { name, value } = event.target;
-		setFormData((prevFormData) => ({... prevFormData, [name]: value}));
+		const sanitizedValue = name === "unit" ? value.replace(/[^A-Za-z]/g, "") : value;
+		setFormData((prevFormData) => ({... prevFormData, [name]: sanitizedValue}));
 	}
 
 	function handleReceiptScanInputFormChange(index:number, field: keyof fridgeItem, value: any) {
