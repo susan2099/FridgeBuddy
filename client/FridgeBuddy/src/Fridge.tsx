@@ -94,7 +94,7 @@ export default function Fridge() {
 	async function onSubmitManualEntry() {
 		const fridgeIng = [{
 			name: formData.name,
-			quantity: parseFloat(formData.quantity as unknown as string),
+			quantity: formData.quantity,
 			unit: (formData.unit !== "") ? formData.unit : null,
 			allergens: formData.allergens,
 			expiry: formData.expiry ? new Date(formData.expiry) : null,

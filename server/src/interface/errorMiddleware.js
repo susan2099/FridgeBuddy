@@ -3,7 +3,6 @@ import { AppError } from '../domain/errors.js';
 import { failure } from './responseFormatter.js';
 
 function sendError(res, status = 500, code, message, details) {
-    console.error(`Error: ${code} - ${message}`, details);
     return res.status(status).json(failure({ code, message, details }));
 }
 
