@@ -98,7 +98,7 @@ function Preferences() {
 	}
 
 	async function handleSubmit(event:any) {
-		event.prevenetDefault();
+		event.preventDefault();
 
 		let nextRestrictions = restrictions;
 		let nextPreferences = preferences;

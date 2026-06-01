@@ -91,7 +91,9 @@ export default function Fridge() {
 		setVisibility(prev => !prev);
 	}
 
-	async function onSubmitManualEntry() {
+	async function onSubmitManualEntry(event:any) {
+		event.preventDefault();
+
 		const fridgeIng = [{
 			name: formData.name,
 			quantity: formData.quantity,
@@ -103,6 +105,15 @@ export default function Fridge() {
 
 		try {
 			await save_to_fridge(fridgeIng);
+			setFridgeData(await load_fridge_data() as Array<fridgeItem>);
+			setManualInputVisibility(false);
+			setFormData({
+				name:"", 
+				quantity:0,
+				unit:"",
+				expiry:"",
+				allergens:Array<string>(),
+			});
 		} catch (error) {
 			console.error("Failed to save fridge item:", error);
 		}
