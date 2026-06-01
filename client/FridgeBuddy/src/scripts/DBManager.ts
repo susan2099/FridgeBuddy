@@ -103,8 +103,8 @@ export async function load_firebase(userId:string) : Promise<Record<string, any>
 	}
 }
 
-// expiry must be a valid date string
-export async function add_firebase(userId:string, name:string, quantity:number, unit:string, expiry:Record<string, any>|null, allergens:Array<string>) {
+// expiry must be a Date or null. JSON.stringify sends Date values as ISO strings.
+export async function add_firebase(userId:string, name:string, quantity:number, unit:string, expiry:Date|null, allergens:Array<string>) {
 	const response = await fetch(buildBackendUrl("/api/fridge/add"), {
 		method: "POST",
 		headers: {

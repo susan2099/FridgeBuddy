@@ -37,9 +37,6 @@ export class UpdateFridgeItemUseCase {
         if (unit !== undefined && unit !== null && typeof unit !== 'string') {
             throw new ValidationError({ message: 'Unit must be null or a string', details: { field: 'unit' } });
         }
-        if (expiry !== undefined && expiry !== null && isNaN(Date.parse(expiry))) {
-            throw new ValidationError({ message: 'Expiry must be null or a valid date string', details: { field: 'expiry' } });
-        }
         if (allergens !== undefined && allergens !== null && !Array.isArray(allergens)) {
             throw new ValidationError({ message: 'Allergens must be null or an array', details: { field: 'allergens' } });
         }

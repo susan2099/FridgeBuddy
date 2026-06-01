@@ -5,6 +5,27 @@ import { buildBackendUrl } from '../utils/backend';
 // temp
 import { type fridgeItem } from '../Fridge';
 
+function normalizeExpiryDate(expiry: fridgeItem["expiry"]) {
+	if(!expiry) {
+		return null;
+	}
+
+	if(expiry instanceof Date) {
+		return expiry;
+	}
+
+	if(typeof expiry === "string") {
+		const date = new Date(expiry);
+		return Number.isNaN(date.getTime()) ? null : date;
+	}
+
+	if(typeof expiry["_seconds"] === "number") {
+		return new Date(expiry["_seconds"] * 1000);
+	}
+
+	return null;
+}
+
 export async function load_fridge_data() {
 	// change this to userID variable later
 	return await load_firebase("test-user-1");
@@ -12,12 +33,12 @@ export async function load_fridge_data() {
 
 export async function save_to_fridge(items: Array<fridgeItem>) {
 	for (const item of items) {
-		add_firebase(
+		await add_firebase(
 			"test-user-1",
 			item.name,
 			item.quantity,
 			item.unit,
-			item.expiry,
+			normalizeExpiryDate(item.expiry),
 			item.allergens
 		);
 	}

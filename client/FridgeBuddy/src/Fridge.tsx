@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 import {Link} from 'react-router-dom';
 import {load_fridge_data, save_to_fridge, receipt_scan } from './scripts/FridgeManager';
 import { usePhotoGallery } from './hooks/usePhotoGallery';
-import { seconds_to_string_date } from './scripts/Helpers.ts';
 import { sendTestNotification } from './fcm.ts';
 
 export type fridgeItem = {
 	name: string,
 	quantity: number,
 	unit: string,
-	expiry: Record<string, any>,
+	expiry: Date | string | Record<string, any> | null,
 	allergens: Array<string>,
 	createdAt: Date,
 }
@@ -33,11 +32,27 @@ function getExpiryDate(expiry: fridgeItem["expiry"] | string | null | undefined)
 		return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
 	}
 
+	if(expiry instanceof Date) {
+		return Number.isNaN(expiry.getTime()) ? null : expiry;
+	}
+
 	if(typeof expiry["_seconds"] === "number") {
 		return new Date(expiry["_seconds"] * 1000);
 	}
 
 	return null;
+}
+
+function formatExpiryDate(expiry: fridgeItem["expiry"]) {
+	const expiryDate = getExpiryDate(expiry);
+	if(!expiryDate) {
+		return "";
+	}
+
+	const year = expiryDate.getUTCFullYear();
+	const month = String(expiryDate.getUTCMonth() + 1).padStart(2, "0");
+	const day = String(expiryDate.getUTCDate()).padStart(2, "0");
+	return `${year}-${month}-${day}`;
 }
 
 // type ReceiptScanFridgeItem = {
@@ -75,15 +90,21 @@ export default function Fridge() {
 		setVisibility(prev => !prev);
 	}
 
-	function onSubmitManualEntry() {
+	async function onSubmitManualEntry() {
 		const fridgeIng = [{
 			name: formData.name,
-			quantity: "" + formData.quantity + " " + formData.unit,
-			expiry: JSON.stringify(formData.expiry),
-			addedAt: JSON.stringify(formData.expiry) // TODO: or maybe Date.now()?
+			quantity: formData.quantity,
+			unit: formData.unit,
+			allergens: formData.allergens,
+			expiry: formData.expiry ? new Date(formData.expiry) : null,
+			createdAt: new Date(),
 		}] as unknown as Array<fridgeItem>;
 
-		save_to_fridge(fridgeIng);
+		try {
+			await save_to_fridge(fridgeIng);
+		} catch (error) {
+			console.error("Failed to save fridge item:", error);
+		}
 	}
 
 	function handleManualInputFormChange(event:any) {
@@ -247,9 +268,7 @@ export default function Fridge() {
 											<td>{item.name}</td>
 											<td style={{textAlign: "center"}}>{item.quantity} {item.unit}</td>
 											<td style={{textAlign: "center"}}>{item.allergens}</td>
-											<td>{
-												(item.expiry) ? seconds_to_string_date(item.expiry["_seconds"]) : ""
-											}</td>
+											<td>{formatExpiryDate(item.expiry)}</td>
 										</tr>
 									))
 								}

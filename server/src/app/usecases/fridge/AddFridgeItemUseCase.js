@@ -29,14 +29,12 @@ export class AddFridgeItemUseCase {
         if (!name) {
             throw new ValidationError({ message: 'Item name is required', details: { field: 'name' } });
         }
-        if (quantity != null && (typeof quantity !== 'number' || quantity <= 0)) {
+        const normalizedQuantity = quantity == null ? null : Number(quantity);
+        if (quantity != null && (!Number.isFinite(normalizedQuantity) || normalizedQuantity <= 0)) {
             throw new ValidationError({ message: 'Quantity must be null or a positive number', details: { field: 'quantity' } });
         }
         if (unit != null && typeof unit !== 'string') {
             throw new ValidationError({ message: 'Unit must be null or a string', details: { field: 'unit' } });
-        }
-        if (expiry != null && isNaN(Date.parse(expiry))) {
-            throw new ValidationError({ message: 'Expiry must be null or a valid date string', details: { field: 'expiry' } });
         }
         if (allergens != null && !Array.isArray(allergens)) {
             throw new ValidationError({ message: 'Allergens must be an array', details: { field: 'allergens' } });
@@ -52,7 +50,7 @@ export class AddFridgeItemUseCase {
         const item = new FridgeItem({
             userId,
             name: name.trim(),
-            quantity,
+            quantity: normalizedQuantity,
             unit: unit ? unit.trim() : null,
             expiry: normalizedExpiry,
             allergens: allergens ? allergens.map(a => a.trim()) : [],

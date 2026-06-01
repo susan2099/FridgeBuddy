@@ -5,7 +5,7 @@ export class FridgeItem {
         this.name = name ?? "Unknown Item";
         this.quantity = quantity ?? 1;
         this.unit = unit ?? null;
-        this.expiry = expiry ?? null;
+        this.expiry = expiry?.toDate?.() ?? (expiry ? new Date(expiry) : null);
         this.allergens = allergens ?? [];
         this.createdAt = createdAt?.toDate?.() ?? (createdAt ? new Date(createdAt) : null);
     }
