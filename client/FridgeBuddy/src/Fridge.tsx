@@ -143,6 +143,20 @@ export default function Fridge() {
 		}
 	}
 
+	async function handleCancelManualEntry() {
+		setManualInputVisibility(false);
+		setFormData({
+			id:"",
+			name:"", 
+			quantity:0,
+			unit:"",
+			expiry:"",
+			allergens:Array<string>(),
+			createdAt:new Date(),
+		});
+		setAllergenFields([]);
+	}
+
 	async function handleEditFridgeItem(itemId: string) {
 		event?.preventDefault();
 
@@ -594,7 +608,7 @@ export default function Fridge() {
 					}
 
 					<br/>
-					<button type="button" onClick={() => {setManualInputVisibility(false);}}>Cancel</button>
+					<button type="button" onClick={handleCancelManualEntry}>Cancel</button>
 					<button>Submit</button>
 				</form>
 			</div>
