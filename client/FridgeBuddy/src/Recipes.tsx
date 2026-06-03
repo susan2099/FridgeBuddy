@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { LoadingSpinner } from './components/LoadingSpinner.tsx';
 
 import { request_recipe } from './scripts/RecipeManager';
 
@@ -52,6 +53,7 @@ const omeletTestRecipe = {
 
 function Recipes() {
 	const [formData, setFormData] = useState({additionalOptions:""});
+	const [loading, setLoading] = useState(false);
 	const [recipeSuccessfullyGenerated, setSuccess] = useState(false);
 	const [recipeData, setRecipeData] = useState({
 		name:"",
@@ -73,7 +75,9 @@ function Recipes() {
 	async function handleSubmit(event:any) {
 		event.preventDefault(); // stop form submission from reloading page
 
+		setLoading(true);
 		const response = await request_recipe(formData.additionalOptions);
+		setLoading(false);
 
 		setRecipeGenerationSuccess(true);
 		if(response === false) { // recipe failed to generate, give the default recipe
@@ -121,8 +125,19 @@ function Recipes() {
 				</Link>
 			</div>
 
-			<div 
-				id="recipePanel" className="recipe_panel outline" 
+			<div id="loadingSpinner"
+				className="popup outline"
+				style={{
+					display: loading ? "flex" : "none",
+					padding: "0px",
+				}}
+			>
+				<LoadingSpinner visible={true}>
+				</LoadingSpinner>
+			</div>
+
+			<div id="recipePanel" 
+				className="recipe_panel outline" 
 				style={{ 
 					display: (recipePanelVisible) ? "flex" : "none",
 					width: "85vw",

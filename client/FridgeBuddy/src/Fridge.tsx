@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import {Link} from 'react-router-dom';
-import {load_fridge_data, save_to_fridge, update_fridge, receipt_scan, delete_fridge_item } from './scripts/FridgeManager';
+import { Link } from 'react-router-dom';
+import { load_fridge_data, save_to_fridge, update_fridge, receipt_scan, delete_fridge_item } from './scripts/FridgeManager';
 import { usePhotoGallery } from './hooks/usePhotoGallery';
 import { sendTestNotification } from './fcm.ts';
+import { LoadingSpinner } from './components/LoadingSpinner.tsx';
 
 type ManualInputType = "Add" | "Update";
 
 export type fridgeItem = {
-	id: string|null,
+	id: string | null,
 	name: string,
 	quantity: number,
 	unit: string,
@@ -26,20 +27,20 @@ function sleep(ms: number) {
 }
 
 function getExpiryDate(expiry: fridgeItem["expiry"] | string | null | undefined) {
-	if(!expiry) {
+	if (!expiry) {
 		return null;
 	}
 
-	if(typeof expiry === "string") {
+	if (typeof expiry === "string") {
 		const parsedDate = new Date(expiry);
 		return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
 	}
 
-	if(expiry instanceof Date) {
+	if (expiry instanceof Date) {
 		return Number.isNaN(expiry.getTime()) ? null : expiry;
 	}
 
-	if(typeof expiry["_seconds"] === "number") {
+	if (typeof expiry["_seconds"] === "number") {
 		return new Date(expiry["_seconds"] * 1000);
 	}
 
@@ -48,7 +49,7 @@ function getExpiryDate(expiry: fridgeItem["expiry"] | string | null | undefined)
 
 function formatExpiryDate(expiry: fridgeItem["expiry"]) {
 	const expiryDate = getExpiryDate(expiry);
-	if(!expiryDate) {
+	if (!expiryDate) {
 		return "";
 	}
 
@@ -65,20 +66,21 @@ function formatExpiryDate(expiry: fridgeItem["expiry"]) {
 // }
 
 export default function Fridge() {
-	const {photos, addNewToGallery, clearPhotos} = usePhotoGallery();
+	const { photos, addNewToGallery, clearPhotos } = usePhotoGallery();
 	const [isVisible, setVisibility] = useState(false);
 	const [manualInputVisible, setManualInputVisibility] = useState(false);
 	const [manualInputType, setManualInputType] = useState<ManualInputType>("Add");
+	const [loading, setLoading] = useState(false);
 
 	const [fridgeData, setFridgeData] = useState(Array<fridgeItem>());
 	const [formData, setFormData] = useState<fridgeItem>({
-		id:null,
-		name:"", 
-		quantity:0, 
-		unit:"", 
-		expiry:"", 
-		allergens:Array<string>(),
-		createdAt:new Date(),
+		id: null,
+		name: "",
+		quantity: 0,
+		unit: "",
+		expiry: "",
+		allergens: Array<string>(),
+		createdAt: new Date(),
 	});
 
 	const [receiptScanResults, setReceiptScanResults] = useState(Array<fridgeItem>());
@@ -86,7 +88,9 @@ export default function Fridge() {
 	useEffect(
 		() => {
 			async function init() {
+				setLoading(true);
 				setFridgeData(await load_fridge_data() as Array<fridgeItem>);
+				setLoading(false);
 			}
 			init();
 		}, []
@@ -110,23 +114,23 @@ export default function Fridge() {
 		}] as unknown as Array<fridgeItem>;
 
 		try {
-			if(manualInputType === ("Add" as ManualInputType)) {
+			if (manualInputType === ("Add" as ManualInputType)) {
 				await save_to_fridge(fridgeIng);
 			} else {
 				await update_fridge(fridgeIng[0]);
 			}
 			setFridgeData(await load_fridge_data() as Array<fridgeItem>);
 			setManualInputVisibility(false);
-			
+
 			// remove the old inputs
 			setFormData({
-				id:"",
-				name:"", 
-				quantity:0,
-				unit:"",
-				expiry:"",
-				allergens:Array<string>(),
-				createdAt:new Date(),
+				id: "",
+				name: "",
+				quantity: 0,
+				unit: "",
+				expiry: "",
+				allergens: Array<string>(),
+				createdAt: new Date(),
 			});
 		} catch (error) {
 			console.error("Failed to save fridge item:", error);
@@ -143,18 +147,18 @@ export default function Fridge() {
 		setFormData({
 			"id": itemId,
 			"name": item.name,
-			"quantity":item.quantity,
-			"unit":item.unit,
-			"expiry":JSON.stringify(item.expiry),
-			"allergens":item.allergens,
+			"quantity": item.quantity,
+			"unit": item.unit,
+			"expiry": JSON.stringify(item.expiry),
+			"allergens": item.allergens,
 		} as fridgeItem);
-		
+
 		setManualInputVisibility(true);
 	}
 
 	async function handleDeleteFridgeItem(item: fridgeItem) {
 		const confirmed = window.confirm(`Delete ${item.name} from your fridge?`);
-		if(!confirmed) {
+		if (!confirmed) {
 			return;
 		}
 
@@ -166,18 +170,18 @@ export default function Fridge() {
 		}
 	}
 
-	function handleManualInputFormChange(event:any) {
+	function handleManualInputFormChange(event: any) {
 		const { name, value } = event.target;
-		setFormData((prevFormData) => ({... prevFormData, [name]: value}));
+		setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
 	}
 
-	function handleReceiptScanInputFormChange(index:number, field: keyof fridgeItem, value: any) {
-		setReceiptScanResults(prev => prev.map((item, i) => 
-			i === index ? { ...item, [field]: value} : item
+	function handleReceiptScanInputFormChange(index: number, field: keyof fridgeItem, value: any) {
+		setReceiptScanResults(prev => prev.map((item, i) =>
+			i === index ? { ...item, [field]: value } : item
 		));
 	}
 
-	function handleReceiptScanResults(results:Array<Record<string, any>>) {
+	function handleReceiptScanResults(results: Array<Record<string, any>>) {
 		// allergens: Array [], auto_applied: true, createdAt: null, expiry: null, id: null, name: "sugar", quantity: 1, raw_name: "ST # OP # SUGAR $", unit: "", userId: null
 		const fridgeItemResults = results.map((result) => (
 			{
@@ -198,7 +202,7 @@ export default function Fridge() {
 
 		const data = await load_fridge_data();
 
-		if(!Array.isArray(data)) {
+		if (!Array.isArray(data)) {
 			alert("Could not load fridge items for expiry alerts.");
 			return;
 		}
@@ -207,7 +211,7 @@ export default function Fridge() {
 		const alertWindowEnd = now + EXPIRY_ALERT_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 		const expiringItems = data.filter((item) => {
 			const expiryDate = getExpiryDate(item.expiry);
-			if(!expiryDate) {
+			if (!expiryDate) {
 				return false;
 			}
 
@@ -224,26 +228,30 @@ export default function Fridge() {
 
 	return (
 		<div style={{
-			height: "calc(100dvh - 4rem)",
+			// height: "calc(100dvh - 4rem)",
+			// width: "95vw",
+			// minWidth: "0",
+			alignSelf: "stretch",
 			display: "flex",
+			// flex: "1",
 			flexDirection: "column",
 			overflow: "hidden",
 		}}>
-		{
-			// ********************************
-			// MAIN FRIDGE TABLE
-			// ********************************
-		}
+			{
+				// ********************************
+				// MAIN FRIDGE TABLE
+				// ********************************
+			}
 			<section style={{
 				flex: "0 0 auto",
 				display: "flex",
 				flexDirection: "column",
 				minHeight: "0",
 			}}>
-				<h1 style={{ margin: "0 0 16px"}}>Your Fridge</h1>
+				<h1 style={{ margin: "0 0 16px" }}>Your Fridge</h1>
 				<div style={{
 					flex: "0 0 auto",
-					width: "min(85vw, 95%)",
+					width: "min(85vw, 95vw)",
 					margin: "0 auto",
 					border: "1px solid",
 					borderRadius: "16px",
@@ -266,7 +274,9 @@ export default function Fridge() {
 									<th style={{
 										borderBottom: "1px solid",
 										padding: "8px",
-										minWidth: "15%",
+										width: "1%",
+										whiteSpace: "nowrap",
+										// minWidth: "15%",
 										position: "sticky",
 										top: "0",
 										background: "var(--bg-color)",
@@ -282,6 +292,8 @@ export default function Fridge() {
 									}}>Item</th>
 									<th style={{
 										borderBottom: "1px solid",
+										width:"1%",
+										whiteSpace:"nowrap",
 										padding: "8px",
 										position: "sticky",
 										top: "0",
@@ -298,7 +310,9 @@ export default function Fridge() {
 									}}>Allergen(s)</th>
 									<th style={{
 										borderBottom: "1px solid",
-										padding: "8px",
+										width:"1%",
+										whiteSpace:"nowrap",
+										padding: "8px 16px",
 										position: "sticky",
 										top: "0",
 										background: "var(--bg-color)",
@@ -308,27 +322,30 @@ export default function Fridge() {
 							</thead>
 							<tbody>
 								{
-									fridgeData.map((item:fridgeItem) => (
+									fridgeData.map((item: fridgeItem) => (
 										<tr key={item.id as string}>
-											<td style={{}}> { /* buttons, icons... */ }
+											<td style={{
+												whiteSpace: "nowrap",
+												// borderRight: "1px solid"
+											}}> { /* buttons, icons... */}
 												<button
-													className="edit_button" 
+													className="edit_button"
 													type="button"
-													onClick={() => {handleEditFridgeItem(item.id as string);}}
+													onClick={() => { handleEditFridgeItem(item.id as string); }}
 												>
 												</button>
 
 												<button
-													className="delete_button" 
+													className="delete_button"
 													type="button"
-													onClick={() => {handleDeleteFridgeItem(item); }}
+													onClick={() => { handleDeleteFridgeItem(item); }}
 												>
 												</button>
 											</td>
-											<td>{item.name}</td>
-											<td style={{textAlign: "center"}}>{item.quantity} {item.unit}</td>
-											<td style={{textAlign: "center"}}>{item.allergens}</td>
-											<td>{formatExpiryDate(item.expiry)}</td>
+											<td>&emsp;{item.name}</td>
+											<td style={{ textAlign: "center" }}>{item.quantity} {item.unit}</td>
+											<td style={{ textAlign: "center" }}>{item.allergens}</td>
+											<td style={{ textAlign: "center" }}>{formatExpiryDate(item.expiry)}</td>
 										</tr>
 									))
 								}
@@ -344,13 +361,13 @@ export default function Fridge() {
 				margin: "16px auto 12px",
 			}}></hr>
 
-		{
-			// *********************************************
-			// BUTTONS
-			// *********************************************
-		}
+			{
+				// *********************************************
+				// BUTTONS
+				// *********************************************
+			}
 
-			<div style={{
+			<div id="buttons" style={{
 				flex: "0 0 auto",
 				display: "flex",
 				flexDirection: "column",
@@ -358,54 +375,53 @@ export default function Fridge() {
 				gap: "8px",
 			}}>
 				<button style={{
-							display:"block", 
-							margin:"0 auto"
-						}} 
-						onClick={() => {
-							setManualInputType("Add" as ManualInputType);
-							setManualInputVisibility(true);
-						}}
+					display: "block",
+					margin: "0 auto"
+				}}
+					onClick={() => {
+						setManualInputType("Add" as ManualInputType);
+						setManualInputVisibility(true);
+					}}
 				>Add (+) (Manual)</button>
-				
-				<button style={{
-							display:"block", 
-							margin:"0 auto"
-						}} 
-						onClick={async () => {
-							const savedImage = await addNewToGallery();
-							toggleImagePanel();
-							const results = await receipt_scan(savedImage);
-							handleReceiptScanResults(results);
-						}}
-				>Add (+) (Take a picture)</button>
-				
-				<button style={{
-							display:"block", 
-							margin:"0 auto"
-						}}
-						onClick={() => {
 
-						}}
+				<button style={{
+					display: "block",
+					margin: "0 auto"
+				}}
+					onClick={async () => {
+						const savedImage = await addNewToGallery();
+						toggleImagePanel();
+						const results = await receipt_scan(savedImage);
+						handleReceiptScanResults(results);
+					}}
+				>Add (+) (Take a picture)</button>
+
+				<button style={{
+					display: "block",
+					margin: "0 auto"
+				}}
+					onClick={() => {
+
+					}}
 				>Add (+) (Upload from gallery)</button>
 
 				<button style={{
-							display:"block", 
-							margin:"0 auto"
-						}}
-						onClick={handleGetExpiryAlert}
+					display: "block",
+					margin: "0 auto"
+				}}
+					onClick={handleGetExpiryAlert}
 				>Get expiry alert (Demo only)</button>
 
 				<Link to="/">
-					<button style={{display:"block", margin:"auto"}}>Back</button>
+					<button style={{ display: "block", margin: "auto" }}>Back</button>
 				</Link>
-    		</div>
+			</div>
 
-			<div 
-				id="photoUploader" 
-				className="popup outline" 
+			<div id="photoUploader"
+				className="popup outline"
 				style={{
 					minWidth: "85%",
-					display:(isVisible) ? "flex" : "none"
+					display: (isVisible) ? "flex" : "none"
 				}}
 			>
 				<p style={{
@@ -434,54 +450,54 @@ export default function Fridge() {
 							<img src={photo.webviewPath} style={{
 								height: "100%",
 								width: "100%",
-								display:"block",
-								objectFit:"contain",
+								display: "block",
+								objectFit: "contain",
 							}}></img>
 						</div>
 					))}
 
-					<div id = "receiptScannerResults" style={{
-						flex:1,
+					<div id="receiptScannerResults" style={{
+						flex: 1,
 						minHeight: "0",
 						overflowY: "auto",
 					}}>
 						<form id="receiptScanResultsForm">
-						{
-							receiptScanResults.map((item, index) => (
-								<div key={index}>
-									<label id="itemNameLabel">Item Name </label>
-									<input 
-										type="text" id="itemName" name="name" value={item.name} 
-										onChange={(e) => {handleReceiptScanInputFormChange(index, "name", e.target.value);}}>
-									</input><br/>
+							{
+								receiptScanResults.map((item, index) => (
+									<div key={index}>
+										<label id="itemNameLabel">Item Name </label>
+										<input
+											type="text" id="itemName" name="name" value={item.name}
+											onChange={(e) => { handleReceiptScanInputFormChange(index, "name", e.target.value); }}>
+										</input><br />
 
-									<label id="itemQtyLabel">Quantity </label>
-									<input 
-										type="number" id="itemQty" name="quantity" value={item.quantity} 
-										onChange={(e) => {handleReceiptScanInputFormChange(index, "quantity", e.target.value);}}>
-									</input>
-									<input 
-										type="text" name="unit" value={item.unit} 
-										onChange={(e) => {handleReceiptScanInputFormChange(index, "unit", e.target.value);}} 
-										placeholder="unit (eg: kg, lbs, L, cups, etc)">
-									</input><br/>
-									
-									<label id="itemExpiryLabel">Expiration Date </label>
-									<input 
-										type="date" name="expiry" value={""} /* receiptScanResults[index].expiry */
-										onChange={(e) => {handleReceiptScanInputFormChange(index, "expiry", e.target.value);}}>
-									</input><br/>
+										<label id="itemQtyLabel">Quantity </label>
+										<input
+											type="number" id="itemQty" name="quantity" value={item.quantity}
+											onChange={(e) => { handleReceiptScanInputFormChange(index, "quantity", e.target.value); }}>
+										</input>
+										<input
+											type="text" name="unit" value={item.unit}
+											onChange={(e) => { handleReceiptScanInputFormChange(index, "unit", e.target.value); }}
+											placeholder="unit (eg: kg, lbs, L, cups, etc)">
+										</input><br />
 
-									<label id="itemAllergensLabel">Allergens </label>
-									<input type=""></input><br/> <button type="button">+</button> { }
-								</div>
-							))
-						}
+										<label id="itemExpiryLabel">Expiration Date </label>
+										<input
+											type="date" name="expiry" value={""} /* receiptScanResults[index].expiry */
+											onChange={(e) => { handleReceiptScanInputFormChange(index, "expiry", e.target.value); }}>
+										</input><br />
+
+										<label id="itemAllergensLabel">Allergens </label>
+										<input type=""></input><br /> <button type="button">+</button> { }
+									</div>
+								))
+							}
 						</form>
 					</div>
 				</div>
 
-				<br/>
+				<br />
 
 				<div>
 					<button onClick={
@@ -491,7 +507,7 @@ export default function Fridge() {
 						}
 					} className="fit-content">Cancel</button>
 					<button onClick={() => {
-						console.log("WIP: send image to OCR"); 
+						console.log("WIP: send image to OCR");
 						toggleImagePanel();
 						console.log("WIP: get YAML string, send to save_to_db, load_to_fridge");
 						clearPhotos();
@@ -499,49 +515,60 @@ export default function Fridge() {
 				</div>
 			</div>
 
-			<div	id="manualInsert" 
-					className="popup outline" 
-					style={{ 
-						display: (manualInputVisible) ? "flex" : "none",
-						// width: "50vw",
-					}}
+			<div id="loadingSpinner"
+				className="popup outline"
+				style={{
+					display: loading ? "flex" : "none",
+					padding: "0px",
+				}}
 			>
-				<form id="manualInsertForm" onSubmit={() => {onSubmitManualEntry(formData.id); setManualInputVisibility(false);}}>
+				<LoadingSpinner visible={true}>
+				</LoadingSpinner>
+			</div>
+
+			<div id="manualInsert"
+				className="popup outline"
+				style={{
+					display: (manualInputVisible) ? "flex" : "none",
+					// width: "50vw",
+				}}
+			>
+				<form id="manualInsertForm" onSubmit={() => { onSubmitManualEntry(formData.id); setManualInputVisibility(false); }}>
 					<h2>{(manualInputType == ("Add" as ManualInputType)) ? "Add New Item" : "Edit item"}</h2>
 					<label id="itemNameLabel">Item Name </label>
-					<input type="text" id="itemName" name="name" value={formData.name} onChange={handleManualInputFormChange}></input><br/>
+					<input type="text" id="itemName" name="name" value={formData.name} onChange={handleManualInputFormChange}></input><br />
 
 					<label id="itemQtyLabel">Quantity </label>
-					<input	type="number" 
-							id="itemQty" 
-							name="quantity" 
-							value={formData.quantity} 
-							onChange={handleManualInputFormChange}
-							style={{
-								width:"15%",
-							}}
+					<input type="number"
+						id="itemQty"
+						name="quantity"
+						value={formData.quantity}
+						onChange={handleManualInputFormChange}
+						style={{
+							width: "15%",
+						}}
 					>
 					</input>
-					<input 
-						type="text" name="unit" value={formData.unit} onChange={handleManualInputFormChange} 
+					<input
+						type="text" name="unit" value={formData.unit} onChange={handleManualInputFormChange}
 						placeholder="unit (eg: kg, lbs, L, cups, etc)"
 						style={{
-							width:"50%",
+							width: "50%",
 						}}
-					>	
-					</input><br/>
-					
+					>
+					</input><br />
+
 					<label id="itemExpiryLabel">Expiration Date </label>
-					<input type="date" name="expiry" value={formData.expiry as string} onChange={handleManualInputFormChange}></input><br/>
+					<input type="date" name="expiry" value={formData.expiry as string} onChange={handleManualInputFormChange}></input><br />
 
 					<label id="itemAllergensLabel">Allergens </label>
-					<input type="" placeholder="none"></input><br/> <button type="button">+</button> { /* TODO: need to add a way to add many allergens, and a way to remove/edit them. */ }
+					<input type="" placeholder="none"></input><br /> <button type="button">+</button> { /* TODO: need to add a way to add many allergens, and a way to remove/edit them. */}
 
-					<br/>
-					<button type="button" onClick={() => {setManualInputVisibility(false);}}>Cancel</button>
+					<br />
+					<button type="button" onClick={() => { setManualInputVisibility(false); }}>Cancel</button>
 					<button>Submit</button>
 				</form>
 			</div>
 		</div>
-  	)
+	)
 }
