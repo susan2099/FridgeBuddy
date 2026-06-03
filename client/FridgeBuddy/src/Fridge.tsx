@@ -221,6 +221,50 @@ export default function Fridge() {
 		));
 	}
 
+	function handleReceiptScanAllergenFieldChange(itemIndex:number, allergenIndex:number, value:string) {
+		setReceiptScanResults(prev => prev.map((item, i) => {
+			if(i !== itemIndex) {
+				return item;
+			}
+
+			const allergens = Array.isArray(item.allergens) ? item.allergens : [];
+			return {
+				...item,
+				allergens: allergens.map((allergen, j) => 
+					j === allergenIndex ? value : allergen
+				),
+			};
+		}));
+	}
+
+	function handleAddReceiptScanAllergenField(itemIndex:number) {
+		setReceiptScanResults(prev => prev.map((item, i) => {
+			if(i !== itemIndex) {
+				return item;
+			}
+
+			const allergens = Array.isArray(item.allergens) ? item.allergens : [];
+			return {
+				...item,
+				allergens: [...allergens, ""],
+			};
+		}));
+	}
+
+	function handleRemoveReceiptScanAllergenField(itemIndex:number, allergenIndex:number) {
+		setReceiptScanResults(prev => prev.map((item, i) => {
+			if(i !== itemIndex) {
+				return item;
+			}
+
+			const allergens = Array.isArray(item.allergens) ? item.allergens : [];
+			return {
+				...item,
+				allergens: allergens.filter((_, j) => j !== allergenIndex),
+			};
+		}));
+	}
+
 	function handleReceiptScanResults(results: Array<Record<string, any>>) {
 		// allergens: Array [], auto_applied: true, createdAt: null, expiry: null, id: null, name: "sugar", quantity: 1, raw_name: "ST # OP # SUGAR $", unit: "", userId: null
 		const fridgeItemResults = results.map((result) => (
@@ -229,7 +273,7 @@ export default function Fridge() {
 				quantity: result.quantity,
 				unit: result.unit,
 				expiry: result.expiry,
-				allergens: result.allergens,
+				allergens: Array.isArray(result.allergens) ? result.allergens : [],
 				createdAt: result.createdAt
 			} as fridgeItem
 		));
@@ -431,27 +475,49 @@ export default function Fridge() {
 								setManualInputVisibility(true);
 							}}
 				>Add (+) (Manual)</button>
-
-				<button style={{
-					display: "block",
-					margin: "0 auto"
-				}}
-					onClick={async () => {
-						const savedImage = await addNewToGallery();
-						toggleImagePanel();
-						const results = await receipt_scan(savedImage);
-						handleReceiptScanResults(results);
-					}}
-				>Add (+) (Take a picture)</button>
-
-				<button style={{
-					display: "block",
-					margin: "0 auto"
-				}}
-					onClick={() => {
-
-					}}
-				>Add (+) (Upload from gallery)</button>
+				
+				<div style={{
+					display: "flex",
+					justifyContent: "center",
+					gap: "8px",
+					flexWrap: "wrap",
+				}}>
+					<button 
+							onClick={() => {
+								
+							}}
+					>Scan receipt (+) (From camera)</button>
+					
+					<button
+							onClick={async () => {
+								const savedImage = await addNewToGallery();
+								toggleImagePanel();
+								const results = await receipt_scan(savedImage);
+								handleReceiptScanResults(results);
+							}}
+					>Scan receipt (+) (From gallery)</button>
+				</div>
+				<div style={{
+					display: "flex",
+					justifyContent: "center",
+					gap: "8px",
+					flexWrap: "wrap",
+				}}>
+					<button 
+							onClick={() => {
+								
+							}}
+					>Scan barcode (+) (From camera)</button>
+					
+					<button
+							onClick={async () => {
+								const savedImage = await addNewToGallery();
+								toggleImagePanel();
+								const results = await receipt_scan(savedImage);
+								handleReceiptScanResults(results);
+							}}
+					>Scan barcode (+) (From gallery)</button>
+				</div>
 
 				<button style={{
 					display: "block",
@@ -476,7 +542,6 @@ export default function Fridge() {
 					fontSize: "1.6em",
 					margin: "0em 0.4em 0em 0em",
 				}}><b>Adding Items</b></p>
-				<hr></hr>
 
 				<div id="photoAndResultHolder" style={{
 					display: "flex",
@@ -512,38 +577,58 @@ export default function Fridge() {
 						<form id="receiptScanResultsForm">
 							{
 								receiptScanResults.map((item, index) => (
-									<div key={index}>
+									<div key={index} style={{
+										marginBottom: "1em",
+										paddingBottom: "1em",
+										borderBottom: index === receiptScanResults.length - 1 ? "none" : "1px solid #ddd",
+									}}>
 										<label id="itemNameLabel">Item Name </label>
 										<input
 											type="text" id="itemName" name="name" value={item.name}
 											onChange={(e) => { handleReceiptScanInputFormChange(index, "name", e.target.value); }}>
 										</input><br />
 
-									<label id="itemQtyLabel">Quantity </label>
-									<input 
-										type="number" id="itemQty" name="quantity" value={item.quantity} 
-										onChange={(e) => {handleReceiptScanInputFormChange(index, "quantity", e.target.value);}}>
-									</input>
-									<input 
-										type="text" name="unit" value={item.unit} 
-										onChange={(e) => {handleReceiptScanInputFormChange(index, "unit", e.target.value);}} 
-										placeholder="unit (eg: kg, lbs, L, cups, etc)">
-									</input><br/>
-									
-									<label id="itemExpiryLabel">Expiration Date </label>
-									<input 
-										type="date" name="expiry" value={formatExpiryDate(item.expiry)}
-										onChange={(e) => {handleReceiptScanInputFormChange(index, "expiry", e.target.value);}}>
-									</input><br/>
+										<label id="itemQtyLabel">Quantity </label>
+										<input
+											type="number" id="itemQty" name="quantity" value={item.quantity}
+											onChange={(e) => { handleReceiptScanInputFormChange(index, "quantity", e.target.value); }}>
+										</input>
+										<input
+											type="text" name="unit" value={item.unit}
+											onChange={(e) => { handleReceiptScanInputFormChange(index, "unit", e.target.value); }}
+											placeholder="unit (eg: kg, lbs, L, cups, etc)">
+										</input><br />
 
 										<label id="itemExpiryLabel">Expiration Date </label>
 										<input
-											type="date" name="expiry" value={""} /* receiptScanResults[index].expiry */
+											type="date" name="expiry" value={formatExpiryDate(item.expiry)}
 											onChange={(e) => { handleReceiptScanInputFormChange(index, "expiry", e.target.value); }}>
 										</input><br />
 
 										<label id="itemAllergensLabel">Allergens </label>
-										<input type=""></input><br /> <button type="button">+</button> { }
+										<button
+											type="button"
+											style={{ height: "1.5em", width: "1.5em", padding: "0", margin: "0 0.5em" }}
+											onClick={() => { handleAddReceiptScanAllergenField(index); }}
+										>+</button>
+										<br />
+										{
+											item.allergens.map((allergen, allergenIndex) => (
+												<div key={allergenIndex}>
+													<button
+														type="button"
+														style={{ height: "1.5em", width: "1.5em", padding: "0", margin: "0 0.5em" }}
+														onClick={() => { handleRemoveReceiptScanAllergenField(index, allergenIndex); }}
+													>-</button>
+													<input
+														type="text"
+														value={allergen}
+														placeholder="none"
+														onChange={(event) => { handleReceiptScanAllergenFieldChange(index, allergenIndex, event.target.value); }}
+													></input>
+												</div>
+											))
+										}
 									</div>
 								))
 							}
@@ -558,6 +643,7 @@ export default function Fridge() {
 						() => {
 							clearPhotos();
 							toggleImagePanel();
+							setReceiptScanResults([]);
 						}
 					} className="fit-content">Cancel</button>
 					<button onClick={() => {
@@ -565,6 +651,7 @@ export default function Fridge() {
 						toggleImagePanel();
 						console.log("WIP: get YAML string, send to save_to_db, load_to_fridge");
 						clearPhotos();
+						setReceiptScanResults([]);
 					}} className="fit-content">Add</button>
 				</div>
 			</div>
