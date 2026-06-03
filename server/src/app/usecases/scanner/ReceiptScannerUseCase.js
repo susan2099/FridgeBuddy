@@ -1,4 +1,5 @@
 import { ValidationError } from '../../errors.js';
+import { buildEstimatedExpiryDate } from './estimatedExpiryDate.js';
 
 export class ReceiptScannerUseCase {
     constructor({ receiptRepository, itemNameNormalizer, fridgeRepository }) {
@@ -61,18 +62,4 @@ function normalizeReceiptQuantity(quantity) {
         }
     }
     return 1;
-}
-
-function buildEstimatedExpiryDate({ fromDate, shelfLifeDays }) {
-    if (!Number.isInteger(shelfLifeDays) || shelfLifeDays < 0) {
-        return null;
-    }
-
-    const expiryDate = new Date(Date.UTC(
-        fromDate.getUTCFullYear(),
-        fromDate.getUTCMonth(),
-        fromDate.getUTCDate() + shelfLifeDays
-    ));
-
-    return expiryDate.toISOString().slice(0, 10);
 }

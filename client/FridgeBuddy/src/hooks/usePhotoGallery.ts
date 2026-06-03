@@ -9,7 +9,7 @@ export function usePhotoGallery() {
     const [photos, setPhotos] = useState<UserPhoto[]>([]);
 	const clearPhotos = () => setPhotos([]);
 
-	const addNewToGallery = async () => {
+	const addPhotoFromGallery = async () => {
 		// Take a photo
 		const capturedPhoto = await Camera.getPhoto({
 			resultType: CameraResultType.DataUrl,
@@ -34,7 +34,7 @@ export function usePhotoGallery() {
 	};
 
 	return {
-		addNewToGallery,
+		addPhotoFromGallery,
 		clearPhotos,
 		photos
 	};

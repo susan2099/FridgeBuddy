@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { load_fridge_data, save_to_fridge, update_fridge, receipt_scan, delete_fridge_item } from './scripts/FridgeManager';
+import { load_fridge_data, save_to_fridge, update_fridge, receipt_scan, barcode_scan, delete_fridge_item } from './scripts/FridgeManager';
 import { usePhotoGallery } from './hooks/usePhotoGallery';
 import { sendTestNotification } from './fcm.ts';
 import { LoadingSpinner } from './components/LoadingSpinner.tsx';
@@ -70,7 +70,7 @@ function formatExpiryDate(expiry: fridgeItem["expiry"]) {
 // }
 
 export default function Fridge() {
-	const { photos, addNewToGallery, clearPhotos } = usePhotoGallery();
+	const { photos, addPhotoFromGallery, clearPhotos } = usePhotoGallery();
 	const [isVisible, setVisibility] = useState(false);
 	const [manualInputVisible, setManualInputVisibility] = useState(false);
 	const [manualInputType, setManualInputType] = useState<ManualInputType>("Add");
@@ -279,6 +279,32 @@ export default function Fridge() {
 		));
 
 		setReceiptScanResults(fridgeItemResults);
+	}
+
+	function handleBarcodeScanResult(result: Record<string, any>) {
+		handleReceiptScanResults([result]);
+	}
+
+	async function handleAddScanResults() {
+		const items = receiptScanResults.map((item) => ({
+			...item,
+			quantity: parseFloat(item.quantity as unknown as string),
+			unit: item.unit !== "" ? item.unit : null,
+			allergens: item.allergens
+				.map((allergen) => allergen.trim())
+				.filter((allergen) => allergen !== ""),
+		})) as Array<fridgeItem>;
+
+		try {
+			await save_to_fridge(items);
+			setFridgeData(await load_fridge_data() as Array<fridgeItem>);
+			toggleImagePanel();
+			clearPhotos();
+			setReceiptScanResults([]);
+		} catch (error) {
+			console.error("Failed to save scanned fridge items:", error);
+			alert(error instanceof Error ? error.message : "Failed to save scanned fridge items.");
+		}
 	}
 
 	async function handleGetExpiryAlert() {
@@ -490,7 +516,7 @@ export default function Fridge() {
 					
 					<button
 							onClick={async () => {
-								const savedImage = await addNewToGallery();
+								const savedImage = await addPhotoFromGallery();
 								toggleImagePanel();
 								const results = await receipt_scan(savedImage);
 								handleReceiptScanResults(results);
@@ -511,10 +537,10 @@ export default function Fridge() {
 					
 					<button
 							onClick={async () => {
-								const savedImage = await addNewToGallery();
+								const savedImage = await addPhotoFromGallery();
 								toggleImagePanel();
-								const results = await receipt_scan(savedImage);
-								handleReceiptScanResults(results);
+								const result = await barcode_scan(savedImage);
+								handleBarcodeScanResult(result);
 							}}
 					>Scan barcode (+) (From gallery)</button>
 				</div>
@@ -646,13 +672,7 @@ export default function Fridge() {
 							setReceiptScanResults([]);
 						}
 					} className="fit-content">Cancel</button>
-					<button onClick={() => {
-						console.log("WIP: send image to OCR");
-						toggleImagePanel();
-						console.log("WIP: get YAML string, send to save_to_db, load_to_fridge");
-						clearPhotos();
-						setReceiptScanResults([]);
-					}} className="fit-content">Add</button>
+					<button onClick={handleAddScanResults} className="fit-content">Add</button>
 				</div>
 			</div>
 

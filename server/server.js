@@ -67,7 +67,7 @@ async function fridgeBuddyBootstrap() {
     const barcodeRepository = new OffRepository();
     const receiptRepository = new TabScannerRepository({ apiKey: process.env.TABSCANNER_API_KEY });
     const itemNameNormalizer = new GeminiItemNameNormalizer({ ai });
-    const barcodeScannerUseCase = new BarcodeScannerUseCase({ barcodeRepository });
+    const barcodeScannerUseCase = new BarcodeScannerUseCase({ barcodeRepository, itemNameNormalizer });
     const receiptScannerUseCase = new ReceiptScannerUseCase({ receiptRepository, itemNameNormalizer, fridgeRepository });
     const scannerController = new ScannerController({ barcodeScannerUseCase, receiptScannerUseCase });
 

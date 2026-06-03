@@ -87,3 +87,63 @@ export async function receipt_scan(photo: Record<string, any>) {
 	console.log(data.data.items);
 	return data.data.items;
 }
+
+export async function barcode_scan(photo: Record<string, any>) {
+	console.log("requesting barcode scan backend");
+
+	const barcode = await detectBarcodeFromPhoto(photo);
+	const result = await fetch(buildBackendUrl(`/api/scanner/barcode/${encodeURIComponent(barcode)}`));
+	
+	if(!result.ok) {
+		const error = await result.json().catch(() => null);
+		throw new Error(error?.error?.message || "Failed to fetch barcode product data.");
+	}
+	
+	const data = await result.json();
+	console.log("barcode: ", barcode);
+	console.log("barcode scan result:", data.data);
+	return data.data;
+}
+
+async function detectBarcodeFromPhoto(photo: Record<string, any>) {
+	const BarcodeDetectorClass = (window as any).BarcodeDetector;
+	if(!BarcodeDetectorClass) {
+		throw new Error("Barcode scanning is not supported in this browser.");
+	}
+
+	const imageSrc = photo.webviewPath;
+	if(!imageSrc) {
+		throw new Error("Selected image is missing.");
+	}
+
+	const detector = new BarcodeDetectorClass({
+		formats: [
+			"ean_13",
+			"ean_8",
+			"upc_a",
+			"upc_e",
+			"code_128",
+			"code_39",
+			"codabar",
+			"itf",
+		],
+	});
+	const image = await loadImage(imageSrc);
+	const barcodes = await detector.detect(image);
+	const barcode = barcodes.find((result: Record<string, any>) => result.rawValue)?.rawValue;
+
+	if(!barcode) {
+		throw new Error("No barcode found in the selected image.");
+	}
+
+	return barcode;
+}
+
+function loadImage(src: string) {
+	return new Promise<HTMLImageElement>((resolve, reject) => {
+		const image = new Image();
+		image.onload = () => resolve(image);
+		image.onerror = () => reject(new Error("Failed to load selected image."));
+		image.src = src;
+	});
+}

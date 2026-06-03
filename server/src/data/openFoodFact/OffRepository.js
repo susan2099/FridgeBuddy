@@ -8,7 +8,6 @@ export class OffRepository extends BarcodeRepository {
             "product_name",
             "product_quantity",
             "product_quantity_unit",
-            "expiration_date",
             "allergens_tags"
         ].join(",");
         
@@ -31,7 +30,7 @@ export class OffRepository extends BarcodeRepository {
             throw new ProductNotFoundError({ message: `Product with barcode ${barcode} not found in OpenFoodFacts Database.` });
         }
         const product = data.product;
-        const allergens = product.allergens_tags.map(tag => 
+        const allergens = (product.allergens_tags ?? []).map(tag => 
             tag.replace(/^.{2}:/, "").replace(/-/g, " ")
         ); // Replace "en:whole-milk" with "whole milk"
 
@@ -39,7 +38,7 @@ export class OffRepository extends BarcodeRepository {
             name: product.product_name || "Unknown Product",
             quantity: product.product_quantity || null,
             unit: product.product_quantity_unit || null,
-            expiry: product.expiration_date ? new Date(product.expiration_date) : null,
+            expiry: null,
             allergens: allergens
         });
     }
