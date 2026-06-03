@@ -20,6 +20,10 @@ export type fridgeItem = {
 const EXPIRY_ALERT_WINDOW_DAYS = 20;
 const DEMO_NOTIFICATION_DELAY_MS = 5000;
 
+function buildAllergenFields(allergens: Array<string> = []) {
+	return [...allergens];
+}
+
 function sleep(ms: number) {
 	return new Promise((resolve) => {
 		window.setTimeout(resolve, ms);
@@ -82,6 +86,7 @@ export default function Fridge() {
 		allergens: Array<string>(),
 		createdAt: new Date(),
 	});
+	const [allergenFields, setAllergenFields] = useState<Array<string>>([]);
 
 	const [receiptScanResults, setReceiptScanResults] = useState(Array<fridgeItem>());
 
@@ -100,15 +105,19 @@ export default function Fridge() {
 		setVisibility(prev => !prev);
 	}
 
-	async function onSubmitManualEntry(itemId: string | null) {
-		event?.preventDefault();
+	async function onSubmitManualEntry(event:any, itemId: string | null) {
+		event.preventDefault();
+
+		const allergens = allergenFields
+			.map((field) => field.trim())
+			.filter((value) => value !== "");
 
 		const fridgeIng = [{
 			id: itemId,
 			name: formData.name,
 			quantity: parseFloat(formData.quantity as unknown as string),
 			unit: (formData.unit !== "") ? formData.unit : null,
-			allergens: formData.allergens,
+			allergens,
 			expiry: formData.expiry,
 			createdAt: new Date(),
 		}] as unknown as Array<fridgeItem>;
@@ -132,9 +141,24 @@ export default function Fridge() {
 				allergens: Array<string>(),
 				createdAt: new Date(),
 			});
+			setAllergenFields([]);
 		} catch (error) {
 			console.error("Failed to save fridge item:", error);
 		}
+	}
+
+	async function handleCancelManualEntry() {
+		setManualInputVisibility(false);
+		setFormData({
+			id:"",
+			name:"", 
+			quantity:0,
+			unit:"",
+			expiry:"",
+			allergens:Array<string>(),
+			createdAt:new Date(),
+		});
+		setAllergenFields([]);
 	}
 
 	async function handleEditFridgeItem(itemId: string) {
@@ -147,12 +171,13 @@ export default function Fridge() {
 		setFormData({
 			"id": itemId,
 			"name": item.name,
-			"quantity": item.quantity,
-			"unit": item.unit,
-			"expiry": JSON.stringify(item.expiry),
-			"allergens": item.allergens,
+			"quantity":item.quantity,
+			"unit":item.unit,
+			"expiry":formatExpiryDate(item.expiry),
+			"allergens":item.allergens,
 		} as fridgeItem);
-
+		setAllergenFields(buildAllergenFields(item.allergens));
+		
 		setManualInputVisibility(true);
 	}
 
@@ -172,7 +197,22 @@ export default function Fridge() {
 
 	function handleManualInputFormChange(event: any) {
 		const { name, value } = event.target;
-		setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
+		const sanitizedValue = name === "unit" ? value.replace(/[^A-Za-z]/g, "") : value;
+		setFormData((prevFormData) => ({... prevFormData, [name]: sanitizedValue}));
+	}
+
+	function handleAllergenFieldChange(index:number, value:string) {
+		setAllergenFields(prev => prev.map((field, i) => 
+			i === index ? value : field
+		));
+	}
+
+	function handleAddAllergenField() {
+		setAllergenFields(prev => [...prev, ""]);
+	}
+
+	function handleRemoveAllergenField(index:number) {
+		setAllergenFields(prev => prev.filter((_, i) => i !== index));
 	}
 
 	function handleReceiptScanInputFormChange(index: number, field: keyof fridgeItem, value: any) {
@@ -229,9 +269,9 @@ export default function Fridge() {
 	return (
 		<div style={{
 			// height: "calc(100dvh - 4rem)",
-			// width: "95vw",
+			width: "100%",
 			// minWidth: "0",
-			alignSelf: "stretch",
+			// alignSelf: "stretch",
 			display: "flex",
 			// flex: "1",
 			flexDirection: "column",
@@ -243,15 +283,17 @@ export default function Fridge() {
 				// ********************************
 			}
 			<section style={{
-				flex: "0 0 auto",
+				flex: "0 1 auto",
 				display: "flex",
 				flexDirection: "column",
 				minHeight: "0",
 			}}>
 				<h1 style={{ margin: "0 0 16px" }}>Your Fridge</h1>
 				<div style={{
-					flex: "0 0 auto",
-					width: "min(85vw, 95vw)",
+					flex: "0 1 auto",
+					minHeight: "0",
+					maxHeight: "100%",
+					width: "min(85vw, 95%)",
 					margin: "0 auto",
 					border: "1px solid",
 					borderRadius: "16px",
@@ -259,6 +301,7 @@ export default function Fridge() {
 				}}>
 					<div style={{
 						maxHeight: "100%",
+						minHeight: "0",
 						overflow: "auto",
 					}}>
 						<table id="fridgeTable" style={{
@@ -342,9 +385,13 @@ export default function Fridge() {
 												>
 												</button>
 											</td>
-											<td>&emsp;{item.name}</td>
+											<td style={{paddingLeft:"16px"}}>{item.name}</td>
 											<td style={{ textAlign: "center" }}>{item.quantity} {item.unit}</td>
-											<td style={{ textAlign: "center" }}>{item.allergens}</td>
+											<td style={{textAlign: "center"}}>
+												{item.allergens.map((allergen, index) => (
+													<div key={`${item.id}-allergen-${index}`}>{allergen}</div>
+												))}
+											</td>
 											<td style={{ textAlign: "center" }}>{formatExpiryDate(item.expiry)}</td>
 										</tr>
 									))
@@ -375,13 +422,14 @@ export default function Fridge() {
 				gap: "8px",
 			}}>
 				<button style={{
-					display: "block",
-					margin: "0 auto"
-				}}
-					onClick={() => {
-						setManualInputType("Add" as ManualInputType);
-						setManualInputVisibility(true);
-					}}
+							display:"block", 
+							margin:"0 auto"
+						}}
+							onClick={() => {
+								setManualInputType("Add" as ManualInputType);
+								setAllergenFields([]);
+								setManualInputVisibility(true);
+							}}
 				>Add (+) (Manual)</button>
 
 				<button style={{
@@ -471,16 +519,22 @@ export default function Fridge() {
 											onChange={(e) => { handleReceiptScanInputFormChange(index, "name", e.target.value); }}>
 										</input><br />
 
-										<label id="itemQtyLabel">Quantity </label>
-										<input
-											type="number" id="itemQty" name="quantity" value={item.quantity}
-											onChange={(e) => { handleReceiptScanInputFormChange(index, "quantity", e.target.value); }}>
-										</input>
-										<input
-											type="text" name="unit" value={item.unit}
-											onChange={(e) => { handleReceiptScanInputFormChange(index, "unit", e.target.value); }}
-											placeholder="unit (eg: kg, lbs, L, cups, etc)">
-										</input><br />
+									<label id="itemQtyLabel">Quantity </label>
+									<input 
+										type="number" id="itemQty" name="quantity" value={item.quantity} 
+										onChange={(e) => {handleReceiptScanInputFormChange(index, "quantity", e.target.value);}}>
+									</input>
+									<input 
+										type="text" name="unit" value={item.unit} 
+										onChange={(e) => {handleReceiptScanInputFormChange(index, "unit", e.target.value);}} 
+										placeholder="unit (eg: kg, lbs, L, cups, etc)">
+									</input><br/>
+									
+									<label id="itemExpiryLabel">Expiration Date </label>
+									<input 
+										type="date" name="expiry" value={formatExpiryDate(item.expiry)}
+										onChange={(e) => {handleReceiptScanInputFormChange(index, "expiry", e.target.value);}}>
+									</input><br/>
 
 										<label id="itemExpiryLabel">Expiration Date </label>
 										<input
@@ -533,7 +587,7 @@ export default function Fridge() {
 					// width: "50vw",
 				}}
 			>
-				<form id="manualInsertForm" onSubmit={() => { onSubmitManualEntry(formData.id); setManualInputVisibility(false); }}>
+				<form id="manualInsertForm" onSubmit={(event) => {onSubmitManualEntry(event, formData.id);}}>
 					<h2>{(manualInputType == ("Add" as ManualInputType)) ? "Add New Item" : "Edit item"}</h2>
 					<label id="itemNameLabel">Item Name </label>
 					<input type="text" id="itemName" name="name" value={formData.name} onChange={handleManualInputFormChange}></input><br />
@@ -562,10 +616,32 @@ export default function Fridge() {
 					<input type="date" name="expiry" value={formData.expiry as string} onChange={handleManualInputFormChange}></input><br />
 
 					<label id="itemAllergensLabel">Allergens </label>
-					<input type="" placeholder="none"></input><br /> <button type="button">+</button> { /* TODO: need to add a way to add many allergens, and a way to remove/edit them. */}
+					<button 
+						type="button"
+						style={{height:"1.5em", width: "1.5em", padding: "0", margin: "0 0.5em"}}
+						onClick={handleAddAllergenField}
+					>+</button>
+					<br/>
+					{
+						allergenFields.map((field, index) => (
+							<div key={index}>
+								<button 
+									type="button"
+									style={{height:"1.5em", width: "1.5em", padding: "0", margin: "0 0.5em"}}
+									onClick={() => {handleRemoveAllergenField(index);}}
+								>-</button>
+								<input 
+									type="text"
+									value={field}
+									placeholder="none"
+									onChange={(event) => {handleAllergenFieldChange(index, event.target.value);}}
+								></input>
+							</div>
+						))
+					}
 
-					<br />
-					<button type="button" onClick={() => { setManualInputVisibility(false); }}>Cancel</button>
+					<br/>
+					<button type="button" onClick={handleCancelManualEntry}>Cancel</button>
 					<button>Submit</button>
 				</form>
 			</div>

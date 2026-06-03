@@ -21,6 +21,7 @@ export class ReceiptScannerUseCase {
         if (this.itemNameNormalizer) {
             const rawNames = items.map(item => item?.name || "");
             const normalizedNames = await this.itemNameNormalizer.normalize({ rawNames });
+            const scanDate = new Date();
             processedItems = items
                 .map((item, index) => {
                     const normalizedName = normalizedNames[index];
@@ -31,8 +32,13 @@ export class ReceiptScannerUseCase {
                         ...item,
                         name: normalizedName.normalized_name,
                         quantity: normalizeReceiptQuantity(item.quantity),
+                        expiry: buildEstimatedExpiryDate({
+                            fromDate: scanDate,
+                            shelfLifeDays: normalizedName.estimated_shelf_life_days
+                        }),
                         raw_name: normalizedName.raw_name,
-                        confidence: normalizedName.confidence
+                        confidence: normalizedName.confidence,
+                        estimated_shelf_life_days: normalizedName.estimated_shelf_life_days
                     };
                 })
                 .filter(Boolean);
@@ -55,4 +61,18 @@ function normalizeReceiptQuantity(quantity) {
         }
     }
     return 1;
+}
+
+function buildEstimatedExpiryDate({ fromDate, shelfLifeDays }) {
+    if (!Number.isInteger(shelfLifeDays) || shelfLifeDays < 0) {
+        return null;
+    }
+
+    const expiryDate = new Date(Date.UTC(
+        fromDate.getUTCFullYear(),
+        fromDate.getUTCMonth(),
+        fromDate.getUTCDate() + shelfLifeDays
+    ));
+
+    return expiryDate.toISOString().slice(0, 10);
 }

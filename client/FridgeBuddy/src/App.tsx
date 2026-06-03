@@ -14,7 +14,9 @@ function App() {
   }, []);
 
   return (
-    <>
+    <div style={{
+      width:"100%",
+    }}>
         <Routes>
           <Route path="/" element={<Home />}/>
           <Route path="/fridge" element={<Fridge />}/>
@@ -22,7 +24,7 @@ function App() {
           <Route path="/prefs" element={<Preferences />}/>
           {/* <Route path="/settings" element={<Settings />}/> */}
         </Routes>
-    </>
+    </div>
   )
 }
 

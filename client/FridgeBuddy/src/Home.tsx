@@ -3,7 +3,12 @@ import { Link } from 'react-router-dom';
 
 function Home() {
 	return (
-		<>
+		<div style={{
+			display:"flex",
+			flexDirection:"column",
+			height:"calc(100dvh - 4rem)",
+			justifyContent:"center",
+		}}>
 			<h1>FridgeBuddy</h1>
 
 			<div style={{ display: "flex" }} className="container">
@@ -20,7 +25,7 @@ function Home() {
 					<button>Settings</button>
 				</Link> */}
 			</div>
-		</>
+		</div>
 	)
 }
 
