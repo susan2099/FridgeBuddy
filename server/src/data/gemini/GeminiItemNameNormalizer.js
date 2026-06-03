@@ -4,7 +4,8 @@ import { ItemNameNormalizer } from "../../app/ports/ItemNameNormalizer.js";
 const NormalizedItemSchema = z.object({
     raw_name: z.string(),
     normalized_name: z.string().min(1).nullable(),
-    confidence: z.number().min(0).max(1)
+    confidence: z.number().min(0).max(1),
+    estimated_shelf_life_days: z.number().int().nonnegative().nullable()
 });
 
 const NormalizationSchema = z.object({
@@ -16,7 +17,7 @@ const itemNameTools = [
         functionDeclarations: [
             {
                 name: "emit_item_name_normalization",
-                description: "Return normalized grocery names and confidence scores.",
+                description: "Return normalized grocery names, confidence scores, and estimated shelf life in days.",
                 parameters: z.toJSONSchema(NormalizationSchema)
             }
         ]
@@ -51,6 +52,9 @@ Rules:
 - Return one best normalized grocery item name for each edible food ingredient.
 - If the input is clearly not an edible food ingredient, set normalized_name to null.
 - Confidence must be a decimal 0..1.
+- For each edible item, estimate a typical home storage shelf life in days from the purchase date.
+- Use a practical default storage assumption for the item, such as refrigerated for perishable foods and pantry for shelf-stable foods.
+- If normalized_name is null or shelf life cannot be reasonably estimated, set estimated_shelf_life_days to null.
 - Keep names simple and lowercase (e.g., "boneless chicken breast", "green onions").
 `;
 
@@ -88,7 +92,8 @@ function buildFallback(rawNames) {
         return {
             raw_name: rawName || "",
             normalized_name: name,
-            confidence: 0
+            confidence: 0,
+            estimated_shelf_life_days: null
         };
     });
 }
@@ -103,7 +108,8 @@ function finalizeNormalization({ rawNames, parsed }) {
         return {
             raw_name: normalized.raw_name || rawName,
             normalized_name: normalized.normalized_name,
-            confidence: normalized.confidence
+            confidence: normalized.confidence,
+            estimated_shelf_life_days: normalized.estimated_shelf_life_days
         };
     });
 }

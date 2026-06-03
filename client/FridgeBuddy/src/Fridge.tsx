@@ -516,7 +516,7 @@ export default function Fridge() {
 									
 									<label id="itemExpiryLabel">Expiration Date </label>
 									<input 
-										type="date" name="expiry" value={""} /* receiptScanResults[index].expiry */
+										type="date" name="expiry" value={formatExpiryDate(item.expiry)}
 										onChange={(e) => {handleReceiptScanInputFormChange(index, "expiry", e.target.value);}}>
 									</input><br/>
 
