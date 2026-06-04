@@ -1,3 +1,5 @@
+import { BarcodeFormat, BrowserMultiFormatReader } from '@zxing/browser';
+import { DecodeHintType } from '@zxing/library';
 import { load_firebase, add_firebase, update_firebase, remove_firebase } from './DBManager';
 import { buildBackendUrl } from '../utils/backend';
 // import { type UserPhoto } from '../hooks/usePhotoGallery';
@@ -5,6 +7,28 @@ import { TEST_USER } from './CONSTS';
 
 // temp
 import { type fridgeItem } from '../Fridge';
+
+const BARCODE_DETECTOR_FORMATS = [
+	"ean_13",
+	"ean_8",
+	"upc_a",
+	"upc_e",
+	"code_128",
+	"code_39",
+	"codabar",
+	"itf",
+];
+
+const ZXING_BARCODE_FORMATS = [
+	BarcodeFormat.EAN_13,
+	BarcodeFormat.EAN_8,
+	BarcodeFormat.UPC_A,
+	BarcodeFormat.UPC_E,
+	BarcodeFormat.CODE_128,
+	BarcodeFormat.CODE_39,
+	BarcodeFormat.CODABAR,
+	BarcodeFormat.ITF,
+];
 
 function normalizeExpiryDate(expiry: fridgeItem["expiry"]) {
 	if(!expiry) {
@@ -106,37 +130,46 @@ export async function barcode_scan(photo: Record<string, any>) {
 }
 
 async function detectBarcodeFromPhoto(photo: Record<string, any>) {
-	const BarcodeDetectorClass = (window as any).BarcodeDetector;
-	if(!BarcodeDetectorClass) {
-		throw new Error("Barcode scanning is not supported in this browser.");
-	}
-
 	const imageSrc = photo.webviewPath;
 	if(!imageSrc) {
 		throw new Error("Selected image is missing.");
 	}
 
-	const detector = new BarcodeDetectorClass({
-		formats: [
-			"ean_13",
-			"ean_8",
-			"upc_a",
-			"upc_e",
-			"code_128",
-			"code_39",
-			"codabar",
-			"itf",
-		],
-	});
 	const image = await loadImage(imageSrc);
-	const barcodes = await detector.detect(image);
-	const barcode = barcodes.find((result: Record<string, any>) => result.rawValue)?.rawValue;
-
-	if(!barcode) {
-		throw new Error("No barcode found in the selected image.");
+	const nativeBarcode = await detectBarcodeWithNativeApi(image);
+	if(nativeBarcode) {
+		return nativeBarcode;
 	}
 
-	return barcode;
+	return await detectBarcodeWithZxing(image);
+}
+
+async function detectBarcodeWithNativeApi(image: HTMLImageElement) {
+	const BarcodeDetectorClass = (window as any).BarcodeDetector;
+	if(!BarcodeDetectorClass) {
+		return null;
+	}
+
+	const detector = new BarcodeDetectorClass({
+		formats: BARCODE_DETECTOR_FORMATS,
+	});
+	const barcodes = await detector.detect(image);
+	return barcodes.find((result: Record<string, any>) => result.rawValue)?.rawValue ?? null;
+}
+
+async function detectBarcodeWithZxing(image: HTMLImageElement) {
+	const hints = new Map();
+	hints.set(DecodeHintType.POSSIBLE_FORMATS, ZXING_BARCODE_FORMATS);
+	hints.set(DecodeHintType.TRY_HARDER, true);
+
+	const reader = new BrowserMultiFormatReader(hints);
+
+	try {
+		const result = await reader.decodeFromImageElement(image);
+		return result.getText();
+	} catch {
+		throw new Error("No barcode found in the selected image.");
+	}
 }
 
 function loadImage(src: string) {
