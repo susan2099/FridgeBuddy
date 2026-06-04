@@ -106,7 +106,56 @@ server/config/serviceAccountKey.json
 
 Reference: [Firebase Admin SDK setup documentation](https://firebase.google.com/docs/admin/setup#initialize_the_sdk_in_non-google_environments)
 
-Do not commit `.env` or `server/config/serviceAccountKey.json`. These files are project-local secrets and are already covered by the repository ignore rules.
+Do not commit `.env` or `server/config/serviceAccountKey.json`. The service account file is a project-local secret and is already covered by the repository ignore rules.
+
+### Firebase Cloud Messaging setup
+
+FridgeBuddy uses Firebase Cloud Messaging (FCM) for expiration alerts. After cloning the repository, connect the app to your own Firebase project before running browser or Android push notifications.
+
+These setup steps follow the official Firebase docs for [Web FCM setup](https://firebase.google.com/docs/cloud-messaging/web/get-started), [Android FCM setup](https://firebase.google.com/docs/cloud-messaging/android/get-started), [adding Firebase to Android](https://firebase.google.com/docs/android/setup), and [Firebase Admin SDK setup](https://firebase.google.com/docs/admin/setup#initialize_the_sdk_in_non-google_environments).
+
+In Firebase Console, create or choose a Firebase project, enable Cloud Messaging, and create a Web app. Copy the Web app config into `client/FridgeBuddy/.env`. Also generate a Web Push certificate from Project settings > Cloud Messaging > Web Push certificates, then use its public key as `VITE_FIREBASE_VAPID_KEY`.
+
+```env
+VITE_FIREBASE_API_KEY=your_web_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_web_app_id
+VITE_FIREBASE_VAPID_KEY=your_public_web_push_vapid_key
+```
+
+Update `client/FridgeBuddy/public/firebase-messaging-sw.js` with the same Firebase Web app config. This service worker is required for browser background notifications.
+
+For Android push notifications, add an Android app in the same Firebase project with this package name:
+
+```text
+com.fridgebuddy.fridgebuddy
+```
+
+Download `google-services.json` from Firebase Console and place it here:
+
+```text
+client/FridgeBuddy/android/app/google-services.json
+```
+
+The backend also needs a Firebase service account file so it can save tokens and send FCM messages:
+
+```text
+server/config/serviceAccountKey.json
+```
+
+After these files are in place, rebuild and sync Capacitor before running Android:
+
+```bash
+cd client/FridgeBuddy
+npm run build
+npx cap sync android
+npx cap run android
+```
+
+For browser testing, start the backend and the Vite dev server, then accept the browser notification permission prompt. For Android testing, use a device or emulator with Google Play services; Android 13 and later will also show a runtime notification permission prompt.
 
 Start the backend API:
 
