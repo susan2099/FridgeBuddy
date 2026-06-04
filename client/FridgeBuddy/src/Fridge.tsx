@@ -4,6 +4,7 @@ import { load_fridge_data, save_to_fridge, update_fridge, receipt_scan, barcode_
 import { usePhotoGallery } from './hooks/usePhotoGallery';
 import { sendTestNotification } from './fcm.ts';
 import { LoadingSpinner } from './components/LoadingSpinner.tsx';
+import './Fridge.css';
 
 type ManualInputType = "Add" | "Update";
 
@@ -337,419 +338,264 @@ export default function Fridge() {
 	}
 
 	return (
-		<div style={{
-			// height: "calc(100dvh - 4rem)",
-			width: "100%",
-			// minWidth: "0",
-			// alignSelf: "stretch",
-			display: "flex",
-			// flex: "1",
-			flexDirection: "column",
-			overflow: "hidden",
-		}}>
-			{
-				// ********************************
-				// MAIN FRIDGE TABLE
-				// ********************************
-			}
-			<section style={{
-				flex: "0 1 auto",
-				display: "flex",
-				flexDirection: "column",
-				minHeight: "0",
-			}}>
-				<h1 style={{ margin: "0 0 16px" }}>Your Fridge</h1>
-				<div style={{
-					flex: "0 1 auto",
-					minHeight: "0",
-					maxHeight: "100%",
-					width: "min(85vw, 95%)",
-					margin: "0 auto",
-					border: "1px solid",
-					borderRadius: "16px",
-					overflow: "hidden",
-				}}>
-					<div style={{
-						maxHeight: "100%",
-						minHeight: "0",
-						overflow: "auto",
-					}}>
-						<table id="fridgeTable" style={{
-							width: "100%",
-							minWidth: "40vw",
-							// borderCollapse: "collapse",
-							borderRadius: "10px",
-							borderSpacing: "0px",
-							tableLayout: "auto",
-						}}>
+		<div className="fridge-page">
+			<div className="fridge-shell">
+				<h1 className="fridge-title">Your Fridge</h1>
+				<div className="fridge-table-frame">
+					<div className="fridge-table-scroll">
+						<table id="fridgeTable" className="fridge-table">
+							<colgroup>
+								<col className="fridge-col-actions" />
+								<col className="fridge-col-item" />
+								<col className="fridge-col-quantity" />
+								<col className="fridge-col-allergens" />
+								<col className="fridge-col-expiry" />
+							</colgroup>
 							<thead>
 								<tr>
-									<th style={{
-										borderBottom: "1px solid",
-										padding: "8px",
-										width: "1%",
-										whiteSpace: "nowrap",
-										// minWidth: "15%",
-										position: "sticky",
-										top: "0",
-										background: "var(--bg-color)",
-										zIndex: 1,
-									}}></th>
-									<th style={{
-										borderBottom: "1px solid",
-										padding: "8px",
-										position: "sticky",
-										top: "0",
-										background: "var(--bg-color)",
-										zIndex: 1,
-									}}>Item</th>
-									<th style={{
-										borderBottom: "1px solid",
-										width:"1%",
-										whiteSpace:"nowrap",
-										padding: "8px",
-										position: "sticky",
-										top: "0",
-										background: "var(--bg-color)",
-										zIndex: 1,
-									}}>Quantity</th>
-									<th style={{
-										borderBottom: "1px solid",
-										padding: "8px",
-										position: "sticky",
-										top: "0",
-										background: "var(--bg-color)",
-										zIndex: 1,
-									}}>Allergen(s)</th>
-									<th style={{
-										borderBottom: "1px solid",
-										width:"1%",
-										whiteSpace:"nowrap",
-										padding: "8px 16px",
-										position: "sticky",
-										top: "0",
-										background: "var(--bg-color)",
-										zIndex: 1,
-									}}>Expiration Date</th>
+									<th aria-label="Actions"></th>
+									<th>Item</th>
+									<th>Quantity</th>
+									<th>Allergen(s)</th>
+									<th>Expiration Date</th>
 								</tr>
 							</thead>
 							<tbody>
-								{
-									fridgeData.map((item: fridgeItem) => (
-										<tr key={item.id as string}>
-											<td style={{
-												whiteSpace: "nowrap",
-												// borderRight: "1px solid"
-											}}> { /* buttons, icons... */}
-												<button
-													className="edit_button"
-													type="button"
-													onClick={() => { handleEditFridgeItem(item.id as string); }}
-												>
-												</button>
+								{fridgeData.map((item: fridgeItem) => (
+									<tr key={item.id as string}>
+										<td className="fridge-actions-cell">
+											<button
+												className="fridge-icon-button fridge-edit-button"
+												type="button"
+												aria-label={`Edit ${item.name}`}
+												onClick={() => { handleEditFridgeItem(item.id as string); }}
+											></button>
 
-												<button
-													className="delete_button"
-													type="button"
-													onClick={() => { handleDeleteFridgeItem(item); }}
-												>
-												</button>
-											</td>
-											<td style={{paddingLeft:"16px"}}>{item.name}</td>
-											<td style={{ textAlign: "center" }}>{item.quantity} {item.unit}</td>
-											<td style={{textAlign: "center"}}>
-												{item.allergens.map((allergen, index) => (
-													<div key={`${item.id}-allergen-${index}`}>{allergen}</div>
-												))}
-											</td>
-											<td style={{ textAlign: "center" }}>{formatExpiryDate(item.expiry)}</td>
-										</tr>
-									))
-								}
+											<button
+												className="fridge-icon-button fridge-delete-button"
+												type="button"
+												aria-label={`Delete ${item.name}`}
+												onClick={() => { handleDeleteFridgeItem(item); }}
+											></button>
+										</td>
+										<td>{item.name}</td>
+										<td className="fridge-centered-cell">{item.quantity} {item.unit}</td>
+										<td className="fridge-centered-cell">
+											{item.allergens.map((allergen, index) => (
+												<div key={`${item.id}-allergen-${index}`}>{allergen}</div>
+											))}
+										</td>
+										<td className="fridge-centered-cell">{formatExpiryDate(item.expiry)}</td>
+									</tr>
+								))}
 							</tbody>
 						</table>
 					</div>
 				</div>
-			</section>
 
-			<hr style={{
-				width: "min(85vw, 100%)",
-				flex: "0 0 auto",
-				margin: "16px auto 12px",
-			}}></hr>
+				<hr className="fridge-divider" />
 
-			{
-				// *********************************************
-				// BUTTONS
-				// *********************************************
-			}
-
-			<div id="buttons" style={{
-				flex: "0 0 auto",
-				display: "flex",
-				flexDirection: "column",
-				alignItems: "center",
-				gap: "8px",
-			}}>
-				<button style={{
-							display:"block", 
-							margin:"0 auto"
+				<div id="buttons" className="fridge-button-grid">
+					<button
+						className="fridge-button fridge-button-wide"
+						type="button"
+						onClick={() => {
+							setManualInputType("Add" as ManualInputType);
+							setAllergenFields([]);
+							setManualInputVisibility(true);
 						}}
-							onClick={() => {
-								setManualInputType("Add" as ManualInputType);
-								setAllergenFields([]);
-								setManualInputVisibility(true);
-							}}
-				>Add (+) (Manual)</button>
-				
-				<div style={{
-					display: "flex",
-					justifyContent: "center",
-					gap: "8px",
-					flexWrap: "wrap",
-				}}>
-					<button 
-							onClick={() => {
-								
-							}}
+					>Add (+) (Manual)</button>
+
+					<button
+						className="fridge-button"
+						type="button"
+						onClick={() => {
+
+						}}
 					>Scan receipt (+) (From camera)</button>
-					
+
 					<button
-							onClick={async () => {
-								const savedImage = await addPhotoFromGallery();
-								toggleImagePanel();
-								const results = await receipt_scan(savedImage);
-								handleReceiptScanResults(results);
-							}}
+						className="fridge-button"
+						type="button"
+						onClick={async () => {
+							const savedImage = await addPhotoFromGallery();
+							toggleImagePanel();
+							const results = await receipt_scan(savedImage);
+							handleReceiptScanResults(results);
+						}}
 					>Scan receipt (+) (From gallery)</button>
-				</div>
-				<div style={{
-					display: "flex",
-					justifyContent: "center",
-					gap: "8px",
-					flexWrap: "wrap",
-				}}>
-					<button 
-							onClick={() => {
-								
-							}}
-					>Scan barcode (+) (From camera)</button>
-					
+
 					<button
-							onClick={async () => {
-								const savedImage = await addPhotoFromGallery();
-								toggleImagePanel();
-								const result = await barcode_scan(savedImage);
-								handleBarcodeScanResult(result);
-							}}
+						className="fridge-button"
+						type="button"
+						onClick={() => {
+
+						}}
+					>Scan barcode (+) (From camera)</button>
+
+					<button
+						className="fridge-button"
+						type="button"
+						onClick={async () => {
+							const savedImage = await addPhotoFromGallery();
+							toggleImagePanel();
+							const result = await barcode_scan(savedImage);
+							handleBarcodeScanResult(result);
+						}}
 					>Scan barcode (+) (From gallery)</button>
+
+					<button
+						className="fridge-button"
+						type="button"
+						onClick={handleGetExpiryAlert}
+					>Get expiry alert (Demo only)</button>
+
+					<Link to="/" className="fridge-button-link">
+						<button className="fridge-button" type="button">Back</button>
+					</Link>
 				</div>
-
-				<button style={{
-					display: "block",
-					margin: "0 auto"
-				}}
-					onClick={handleGetExpiryAlert}
-				>Get expiry alert (Demo only)</button>
-
-				<Link to="/">
-					<button style={{ display: "block", margin: "auto" }}>Back</button>
-				</Link>
 			</div>
 
-			<div id="photoUploader"
-				className="popup outline"
-				style={{
-					minWidth: "85%",
-					display: (isVisible) ? "flex" : "none"
-				}}
-			>
-				<p style={{
-					fontSize: "1.6em",
-					margin: "0em 0.4em 0em 0em",
-				}}><b>Adding Items</b></p>
+			<div id="photoUploader" className={`fridge-modal fridge-photo-modal${isVisible ? "" : " fridge-hidden"}`}>
+				<p className="fridge-modal-title"><b>Adding Items</b></p>
 
-				<div id="photoAndResultHolder" style={{
-					display: "flex",
-					flex: "1",
-					overflow: "hidden",
-					width: "100%",
-					minHeight: "0",
-					maxHeight: "100%",
-					margin: "0.4em 0em 1.2em 0em",
-					alignItems: "stretch",
-				}}>
+				<div id="photoAndResultHolder" className="fridge-photo-results">
 					{photos.map((photo, index) => (
-						<div id={`photo${index}`} style={{
-							maxHeight: "60vh",
-							minWidth: "0",
-							maxWidth: "50%",
-							overflow: "hidden",
-						}}>
-							<img src={photo.webviewPath} style={{
-								height: "100%",
-								width: "100%",
-								display: "block",
-								objectFit: "contain",
-							}}></img>
+						<div id={`photo${index}`} className="fridge-photo-preview" key={`${photo.webviewPath}-${index}`}>
+							<img src={photo.webviewPath} alt="Selected receipt or barcode" />
 						</div>
 					))}
 
-					<div id="receiptScannerResults" style={{
-						flex: 1,
-						minHeight: "0",
-						overflowY: "auto",
-					}}>
-						<form id="receiptScanResultsForm">
-							{
-								receiptScanResults.map((item, index) => (
-									<div key={index} style={{
-										marginBottom: "1em",
-										paddingBottom: "1em",
-										borderBottom: index === receiptScanResults.length - 1 ? "none" : "1px solid #ddd",
-									}}>
-										<label id="itemNameLabel">Item Name </label>
-										<input
-											type="text" id="itemName" name="name" value={item.name}
-											onChange={(e) => { handleReceiptScanInputFormChange(index, "name", e.target.value); }}>
-										</input><br />
+					<div id="receiptScannerResults" className="fridge-scan-results">
+						<form id="receiptScanResultsForm" className="fridge-form">
+							{receiptScanResults.map((item, index) => (
+								<div key={index} className="fridge-scan-item">
+									<label>Item Name</label>
+									<input
+										type="text" name="name" value={item.name}
+										onChange={(e) => { handleReceiptScanInputFormChange(index, "name", e.target.value); }}>
+									</input>
 
-										<label id="itemQtyLabel">Quantity </label>
+									<label>Quantity</label>
+									<div className="fridge-inline-fields">
 										<input
-											type="number" id="itemQty" name="quantity" value={item.quantity}
+											type="number" name="quantity" value={item.quantity}
 											onChange={(e) => { handleReceiptScanInputFormChange(index, "quantity", e.target.value); }}>
 										</input>
 										<input
 											type="text" name="unit" value={item.unit}
 											onChange={(e) => { handleReceiptScanInputFormChange(index, "unit", e.target.value); }}
-											placeholder="unit (eg: kg, lbs, L, cups, etc)">
-										</input><br />
+											placeholder="unit">
+										</input>
+									</div>
 
-										<label id="itemExpiryLabel">Expiration Date </label>
-										<input
-											type="date" name="expiry" value={formatExpiryDate(item.expiry)}
-											onChange={(e) => { handleReceiptScanInputFormChange(index, "expiry", e.target.value); }}>
-										</input><br />
+									<label>Expiration Date</label>
+									<input
+										type="date" name="expiry" value={formatExpiryDate(item.expiry)}
+										onChange={(e) => { handleReceiptScanInputFormChange(index, "expiry", e.target.value); }}>
+									</input>
 
-										<label id="itemAllergensLabel">Allergens </label>
+									<div className="fridge-form-label-row">
+										<label>Allergens</label>
 										<button
 											type="button"
-											style={{ height: "1.5em", width: "1.5em", padding: "0", margin: "0 0.5em" }}
+											className="fridge-small-button"
 											onClick={() => { handleAddReceiptScanAllergenField(index); }}
 										>+</button>
-										<br />
-										{
-											item.allergens.map((allergen, allergenIndex) => (
-												<div key={allergenIndex}>
-													<button
-														type="button"
-														style={{ height: "1.5em", width: "1.5em", padding: "0", margin: "0 0.5em" }}
-														onClick={() => { handleRemoveReceiptScanAllergenField(index, allergenIndex); }}
-													>-</button>
-													<input
-														type="text"
-														value={allergen}
-														placeholder="none"
-														onChange={(event) => { handleReceiptScanAllergenFieldChange(index, allergenIndex, event.target.value); }}
-													></input>
-												</div>
-											))
-										}
 									</div>
-								))
-							}
+									{item.allergens.map((allergen, allergenIndex) => (
+										<div className="fridge-inline-fields" key={allergenIndex}>
+											<button
+												type="button"
+												className="fridge-small-button"
+												onClick={() => { handleRemoveReceiptScanAllergenField(index, allergenIndex); }}
+											>-</button>
+											<input
+												type="text"
+												value={allergen}
+												placeholder="none"
+												onChange={(event) => { handleReceiptScanAllergenFieldChange(index, allergenIndex, event.target.value); }}
+											></input>
+										</div>
+									))}
+								</div>
+							))}
 						</form>
 					</div>
 				</div>
 
-				<br />
-
-				<div>
-					<button onClick={
-						() => {
+				<div className="fridge-modal-actions">
+					<button
+						type="button"
+						onClick={() => {
 							clearPhotos();
 							toggleImagePanel();
 							setReceiptScanResults([]);
-						}
-					} className="fit-content">Cancel</button>
-					<button onClick={handleAddScanResults} className="fit-content">Add</button>
+						}}
+					>Cancel</button>
+					<button type="button" onClick={handleAddScanResults}>Add</button>
 				</div>
 			</div>
 
-			<div id="loadingSpinner"
-				className="popup outline"
-				style={{
-					display: loading ? "flex" : "none",
-					padding: "0px",
-				}}
-			>
+			<div id="loadingSpinner" className={`fridge-modal fridge-loading-modal${loading ? "" : " fridge-hidden"}`}>
 				<LoadingSpinner visible={true}>
 				</LoadingSpinner>
 			</div>
 
-			<div id="manualInsert"
-				className="popup outline"
-				style={{
-					display: (manualInputVisible) ? "flex" : "none",
-					// width: "50vw",
-				}}
-			>
-				<form id="manualInsertForm" onSubmit={(event) => {onSubmitManualEntry(event, formData.id);}}>
+			<div id="manualInsert" className={`fridge-modal fridge-manual-modal${manualInputVisible ? "" : " fridge-hidden"}`}>
+				<form id="manualInsertForm" className="fridge-form" onSubmit={(event) => {onSubmitManualEntry(event, formData.id);}}>
 					<h2>{(manualInputType == ("Add" as ManualInputType)) ? "Add New Item" : "Edit item"}</h2>
-					<label id="itemNameLabel">Item Name </label>
-					<input type="text" id="itemName" name="name" value={formData.name} onChange={handleManualInputFormChange}></input><br />
 
-					<label id="itemQtyLabel">Quantity </label>
-					<input type="number"
-						id="itemQty"
-						name="quantity"
-						value={formData.quantity}
-						onChange={handleManualInputFormChange}
-						style={{
-							width: "15%",
-						}}
-					>
-					</input>
-					<input
-						type="text" name="unit" value={formData.unit} onChange={handleManualInputFormChange}
-						placeholder="unit (eg: kg, lbs, L, cups, etc)"
-						style={{
-							width: "50%",
-						}}
-					>
-					</input><br />
+					<label>Item Name</label>
+					<input type="text" name="name" value={formData.name} onChange={handleManualInputFormChange}></input>
 
-					<label id="itemExpiryLabel">Expiration Date </label>
-					<input type="date" name="expiry" value={formData.expiry as string} onChange={handleManualInputFormChange}></input><br />
+					<label>Quantity</label>
+					<div className="fridge-inline-fields">
+						<input
+							type="number"
+							name="quantity"
+							value={formData.quantity}
+							onChange={handleManualInputFormChange}
+						>
+						</input>
+						<input
+							type="text" name="unit" value={formData.unit} onChange={handleManualInputFormChange}
+							placeholder="unit"
+						>
+						</input>
+					</div>
 
-					<label id="itemAllergensLabel">Allergens </label>
-					<button 
-						type="button"
-						style={{height:"1.5em", width: "1.5em", padding: "0", margin: "0 0.5em"}}
-						onClick={handleAddAllergenField}
-					>+</button>
-					<br/>
-					{
-						allergenFields.map((field, index) => (
-							<div key={index}>
-								<button 
-									type="button"
-									style={{height:"1.5em", width: "1.5em", padding: "0", margin: "0 0.5em"}}
-									onClick={() => {handleRemoveAllergenField(index);}}
-								>-</button>
-								<input 
-									type="text"
-									value={field}
-									placeholder="none"
-									onChange={(event) => {handleAllergenFieldChange(index, event.target.value);}}
-								></input>
-							</div>
-						))
-					}
+					<label>Expiration Date</label>
+					<input type="date" name="expiry" value={formData.expiry as string} onChange={handleManualInputFormChange}></input>
 
-					<br/>
-					<button type="button" onClick={handleCancelManualEntry}>Cancel</button>
-					<button>Submit</button>
+					<div className="fridge-form-label-row">
+						<label>Allergens</label>
+						<button
+							type="button"
+							className="fridge-small-button"
+							onClick={handleAddAllergenField}
+						>+</button>
+					</div>
+					{allergenFields.map((field, index) => (
+						<div className="fridge-inline-fields" key={index}>
+							<button
+								type="button"
+								className="fridge-small-button"
+								onClick={() => {handleRemoveAllergenField(index);}}
+							>-</button>
+							<input
+								type="text"
+								value={field}
+								placeholder="none"
+								onChange={(event) => {handleAllergenFieldChange(index, event.target.value);}}
+							></input>
+						</div>
+					))}
+
+					<div className="fridge-modal-actions">
+						<button type="button" onClick={handleCancelManualEntry}>Cancel</button>
+						<button>Submit</button>
+					</div>
 				</form>
 			</div>
 		</div>

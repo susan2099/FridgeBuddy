@@ -1,7 +1,9 @@
 #root {
   max-width: 1280px;
-  /* width:100%; */
+  width: 100%;
+  min-height: 100dvh;
   margin: 0 auto;
-  padding: 2rem;
+  padding: clamp(12px, 3vw, 2rem);
+  box-sizing: border-box;
   /* text-align: center; */
 }

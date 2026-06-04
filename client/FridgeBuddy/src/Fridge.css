@@ -1,0 +1,300 @@
+.fridge-page {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100dvh;
+  padding: clamp(12px, 2vw, 24px);
+  overflow: hidden;
+  background: var(--bg-color);
+}
+
+.fridge-shell {
+  display: flex;
+  flex-direction: column;
+  width: min(1280px, 100%);
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.fridge-title {
+  flex: 0 0 auto;
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1;
+}
+
+.fridge-table-frame {
+  flex: 0 1 auto;
+  min-height: 48px;
+  overflow: hidden;
+  border: 1px solid currentColor;
+  border-radius: 16px;
+}
+
+.fridge-table-scroll {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.fridge-table {
+  width: 100%;
+  min-width: 0px;
+  table-layout: fixed;
+  border-spacing: 0;
+}
+
+.fridge-col-actions {
+  width: 10%;
+}
+
+.fridge-col-item {
+  width: 25%;
+}
+
+.fridge-col-quantity {
+  width: 15%;
+}
+
+.fridge-col-allergens {
+  width: 20%;
+}
+
+.fridge-col-expiry {
+  width: 20%;
+}
+
+.fridge-table th,
+.fridge-table td {
+  padding: 6px;
+  border-bottom: 1px solid currentColor;
+  overflow-wrap: anywhere;
+  vertical-align: middle;
+}
+
+.fridge-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-color);
+  text-align: center;
+}
+
+.fridge-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.fridge-actions-cell,
+.fridge-centered-cell {
+  text-align: center;
+}
+
+.fridge-actions-cell {
+  white-space: nowrap;
+}
+
+.fridge-icon-button {
+  width: 32px;
+  height: 32px;
+  margin: 0 2px;
+  padding: 0;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 20px 20px;
+}
+
+.fridge-edit-button {
+  background-image: url("assets/edit_button.png");
+}
+
+.fridge-delete-button {
+  background-image: url("assets/x.png");
+}
+
+.fridge-divider {
+  flex: 0 0 auto;
+  width: calc(100% - 24px);
+  margin: 12px auto;
+}
+
+.fridge-button-grid {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.fridge-button,
+.fridge-button-link {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.fridge-button {
+  min-height: 42px;
+  padding: 0.5em 0.75em;
+  line-height: 1.15;
+  white-space: normal;
+}
+
+.fridge-button-wide {
+  grid-column: 1 / -1;
+}
+
+.fridge-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  width: min(92vw, 840px);
+  max-height: 78dvh;
+  min-height: 0;
+  padding: 16px;
+  overflow: auto;
+  border-radius: 16px;
+  outline: 2px solid currentColor;
+  background: var(--bg-color);
+  transform: translate(-50%, -50%);
+}
+
+.fridge-hidden {
+  display: none;
+}
+
+.fridge-modal-title {
+  margin: 0 0 12px;
+  font-size: 1.4rem;
+}
+
+.fridge-photo-modal {
+  min-height: min(560px, 72dvh);
+}
+
+.fridge-photo-results {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 16px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fridge-photo-preview {
+  flex: 0 1 45%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.fridge-photo-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.fridge-scan-results {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: auto;
+}
+
+.fridge-form {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.fridge-form h2 {
+  margin: 0 0 4px;
+}
+
+.fridge-form input {
+  width: 100%;
+  min-width: 0;
+}
+
+.fridge-inline-fields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fridge-form-label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fridge-small-button {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+}
+
+.fridge-scan-item {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid currentColor;
+}
+
+.fridge-scan-item:last-child {
+  border-bottom: 0;
+}
+
+.fridge-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.fridge-loading-modal {
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 0;
+}
+
+@media (max-width: 560px) {
+  .fridge-page {
+    padding: 10px;
+  }
+
+  .fridge-title {
+    margin-bottom: 8px;
+  }
+
+  .fridge-table {
+    min-width: 820px;
+  }
+
+  .fridge-button-grid {
+    gap: 6px;
+  }
+
+  .fridge-button {
+    font-size: 0.9rem;
+  }
+
+  .fridge-photo-results {
+    flex-direction: column;
+  }
+
+  .fridge-photo-preview {
+    flex-basis: auto;
+    max-height: 34dvh;
+  }
+}
