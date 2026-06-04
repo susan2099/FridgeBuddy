@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { load_fridge_data, save_to_fridge, update_fridge, receipt_scan, barcode_scan, delete_fridge_item } from './scripts/FridgeManager';
-import { usePhotoGallery } from './hooks/usePhotoGallery';
+import { usePhotoGallery, type UserPhoto } from './hooks/usePhotoGallery';
 import { sendTestNotification } from './fcm.ts';
 import { LoadingSpinner } from './components/LoadingSpinner.tsx';
 import './Fridge.css';
 
 type ManualInputType = "Add" | "Update";
+type ScanType = "receipt" | "barcode";
 
 export type fridgeItem = {
 	id: string | null,
@@ -72,10 +73,17 @@ function formatExpiryDate(expiry: fridgeItem["expiry"]) {
 
 export default function Fridge() {
 	const { photos, addPhotoFromGallery, clearPhotos } = usePhotoGallery();
+	const videoRef = useRef<HTMLVideoElement | null>(null);
+	const streamRef = useRef<MediaStream | null>(null);
 	const [isVisible, setVisibility] = useState(false);
 	const [manualInputVisible, setManualInputVisibility] = useState(false);
 	const [manualInputType, setManualInputType] = useState<ManualInputType>("Add");
 	const [loading, setLoading] = useState(false);
+	const [cameraVisible, setCameraVisible] = useState(false);
+	const [cameraScanType, setCameraScanType] = useState<ScanType | null>(null);
+	const [capturedCameraPhoto, setCapturedCameraPhoto] = useState<UserPhoto | null>(null);
+	const [confirmedCameraPhoto, setConfirmedCameraPhoto] = useState<UserPhoto | null>(null);
+	const [cameraError, setCameraError] = useState("");
 
 	const [fridgeData, setFridgeData] = useState(Array<fridgeItem>());
 	const [formData, setFormData] = useState<fridgeItem>({
@@ -91,6 +99,17 @@ export default function Fridge() {
 
 	const [receiptScanResults, setReceiptScanResults] = useState(Array<fridgeItem>());
 
+	const stopCameraStream = useCallback(() => {
+		streamRef.current?.getTracks().forEach((track) => {
+			track.stop();
+		});
+		streamRef.current = null;
+
+		if(videoRef.current) {
+			videoRef.current.srcObject = null;
+		}
+	}, []);
+
 	useEffect(
 		() => {
 			async function init() {
@@ -101,6 +120,62 @@ export default function Fridge() {
 			init();
 		}, []
 	);
+
+	useEffect(() => {
+		if(!cameraVisible || capturedCameraPhoto) {
+			return;
+		}
+
+		let cancelled = false;
+
+		async function startCameraStream() {
+			setCameraError("");
+			stopCameraStream();
+
+			try {
+				if(!navigator.mediaDevices?.getUserMedia) {
+					throw new Error("This browser does not support webcam capture.");
+				}
+
+				const stream = await navigator.mediaDevices.getUserMedia({
+					audio: false,
+					video: {
+						facingMode: { ideal: "environment" },
+					},
+				});
+
+				if(cancelled) {
+					stream.getTracks().forEach((track) => {
+						track.stop();
+					});
+					return;
+				}
+
+				streamRef.current = stream;
+
+				if(videoRef.current) {
+					videoRef.current.srcObject = stream;
+					await videoRef.current.play();
+				}
+			} catch(error) {
+				if(!cancelled) {
+					setCameraError(error instanceof Error ? error.message : "Could not start the camera.");
+				}
+			}
+		}
+
+		startCameraStream();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [cameraVisible, capturedCameraPhoto, stopCameraStream]);
+
+	useEffect(() => {
+		return () => {
+			stopCameraStream();
+		};
+	}, [stopCameraStream]);
 
 	function toggleImagePanel() {
 		setVisibility(prev => !prev);
@@ -163,8 +238,6 @@ export default function Fridge() {
 	}
 
 	async function handleEditFridgeItem(itemId: string) {
-		event?.preventDefault();
-
 		// find item
 		const item = fridgeData.filter((fridgeItem) => fridgeItem.id == itemId)[0];
 
@@ -286,6 +359,109 @@ export default function Fridge() {
 		handleReceiptScanResults([result]);
 	}
 
+	async function handleScanPhoto(photo: UserPhoto, scanType: ScanType) {
+		setVisibility(true);
+		setReceiptScanResults([]);
+		setLoading(true);
+
+		try {
+			if(scanType === "receipt") {
+				const results = await receipt_scan(photo);
+				handleReceiptScanResults(results);
+			} else {
+				const result = await barcode_scan(photo);
+				handleBarcodeScanResult(result);
+			}
+		} catch(error) {
+			console.error("Failed to scan image:", error);
+			setVisibility(false);
+			clearPhotos();
+			setConfirmedCameraPhoto(null);
+			alert(error instanceof Error ? error.message : "Failed to scan image.");
+		} finally {
+			setLoading(false);
+		}
+	}
+
+	async function handleScanFromGallery(scanType: ScanType) {
+		try {
+			setConfirmedCameraPhoto(null);
+			setReceiptScanResults([]);
+			const savedImage = await addPhotoFromGallery();
+			await handleScanPhoto(savedImage, scanType);
+		} catch(error) {
+			console.error("Failed to select image:", error);
+		}
+	}
+
+	function handleOpenCameraScanner(scanType: ScanType) {
+		clearPhotos();
+		setReceiptScanResults([]);
+		setConfirmedCameraPhoto(null);
+		setCapturedCameraPhoto(null);
+		setCameraError("");
+		setCameraScanType(scanType);
+		setCameraVisible(true);
+	}
+
+	function handleCloseCameraScanner() {
+		stopCameraStream();
+		setCameraVisible(false);
+		setCapturedCameraPhoto(null);
+		setCameraError("");
+		setCameraScanType(null);
+	}
+
+	function handleCaptureCameraPhoto() {
+		const video = videoRef.current;
+		if(!video || video.videoWidth === 0 || video.videoHeight === 0) {
+			setCameraError("Camera is still starting. Please try again.");
+			return;
+		}
+
+		const canvas = document.createElement("canvas");
+		canvas.width = video.videoWidth;
+		canvas.height = video.videoHeight;
+
+		const context = canvas.getContext("2d");
+		if(!context) {
+			setCameraError("Could not capture an image from the camera.");
+			return;
+		}
+
+		context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+		const photo = {
+			filepath: `camera-${Date.now()}.jpg`,
+			webviewPath: canvas.toDataURL("image/jpeg", 0.95),
+		};
+
+		setCapturedCameraPhoto(photo);
+		stopCameraStream();
+	}
+
+	function handleRetakeCameraPhoto() {
+		setCapturedCameraPhoto(null);
+		setCameraError("");
+	}
+
+	async function handleConfirmCameraPhoto() {
+		if(!capturedCameraPhoto || !cameraScanType) {
+			return;
+		}
+
+		const photo = capturedCameraPhoto;
+		const scanType = cameraScanType;
+
+		setConfirmedCameraPhoto(photo);
+		setCameraVisible(false);
+		setCapturedCameraPhoto(null);
+		setCameraError("");
+		stopCameraStream();
+
+		await handleScanPhoto(photo, scanType);
+	}
+
 	async function handleAddScanResults() {
 		const items = receiptScanResults.map((item) => ({
 			...item,
@@ -301,12 +477,16 @@ export default function Fridge() {
 			setFridgeData(await load_fridge_data() as Array<fridgeItem>);
 			toggleImagePanel();
 			clearPhotos();
+			setConfirmedCameraPhoto(null);
 			setReceiptScanResults([]);
 		} catch (error) {
 			console.error("Failed to save scanned fridge items:", error);
 			alert(error instanceof Error ? error.message : "Failed to save scanned fridge items.");
 		}
 	}
+
+	const scanPreviewPhotos = confirmedCameraPhoto ? [confirmedCameraPhoto] : photos;
+	const cameraTitle = cameraScanType === "barcode" ? "Scan Barcode" : "Scan Receipt";
 
 	async function handleGetExpiryAlert() {
 		await sleep(DEMO_NOTIFICATION_DELAY_MS);
@@ -410,38 +590,28 @@ export default function Fridge() {
 						className="fridge-button"
 						type="button"
 						onClick={() => {
-
+							handleOpenCameraScanner("receipt");
 						}}
 					>Scan receipt (+) (From camera)</button>
 
 					<button
 						className="fridge-button"
 						type="button"
-						onClick={async () => {
-							const savedImage = await addPhotoFromGallery();
-							toggleImagePanel();
-							const results = await receipt_scan(savedImage);
-							handleReceiptScanResults(results);
-						}}
+						onClick={() => { handleScanFromGallery("receipt"); }}
 					>Scan receipt (+) (From gallery)</button>
 
 					<button
 						className="fridge-button"
 						type="button"
 						onClick={() => {
-
+							handleOpenCameraScanner("barcode");
 						}}
 					>Scan barcode (+) (From camera)</button>
 
 					<button
 						className="fridge-button"
 						type="button"
-						onClick={async () => {
-							const savedImage = await addPhotoFromGallery();
-							toggleImagePanel();
-							const result = await barcode_scan(savedImage);
-							handleBarcodeScanResult(result);
-						}}
+						onClick={() => { handleScanFromGallery("barcode"); }}
 					>Scan barcode (+) (From gallery)</button>
 
 					<button
@@ -460,7 +630,7 @@ export default function Fridge() {
 				<p className="fridge-modal-title"><b>Adding Items</b></p>
 
 				<div id="photoAndResultHolder" className="fridge-photo-results">
-					{photos.map((photo, index) => (
+					{scanPreviewPhotos.map((photo, index) => (
 						<div id={`photo${index}`} className="fridge-photo-preview" key={`${photo.webviewPath}-${index}`}>
 							<img src={photo.webviewPath} alt="Selected receipt or barcode" />
 						</div>
@@ -530,10 +700,45 @@ export default function Fridge() {
 						onClick={() => {
 							clearPhotos();
 							toggleImagePanel();
+							setConfirmedCameraPhoto(null);
 							setReceiptScanResults([]);
 						}}
 					>Cancel</button>
 					<button type="button" onClick={handleAddScanResults}>Add</button>
+				</div>
+			</div>
+
+			<div id="cameraScanner" className={`fridge-modal fridge-camera-modal${cameraVisible ? "" : " fridge-hidden"}`}>
+				<p className="fridge-modal-title"><b>{cameraTitle}</b></p>
+
+				<div className="fridge-camera-frame">
+					{capturedCameraPhoto ? (
+						<img src={capturedCameraPhoto.webviewPath} alt="Captured receipt or barcode" />
+					) : (
+						<video
+							ref={videoRef}
+							className="fridge-camera-video"
+							autoPlay
+							muted
+							playsInline
+						></video>
+					)}
+				</div>
+
+				{cameraError !== "" && (
+					<p className="fridge-camera-error" role="alert">{cameraError}</p>
+				)}
+
+				<div className="fridge-modal-actions">
+					<button type="button" onClick={handleCloseCameraScanner}>Cancel</button>
+					{capturedCameraPhoto ? (
+						<>
+							<button type="button" onClick={handleRetakeCameraPhoto}>Retake</button>
+							<button type="button" onClick={handleConfirmCameraPhoto}>Confirm</button>
+						</>
+					) : (
+						<button type="button" onClick={handleCaptureCameraPhoto}>Capture</button>
+					)}
 				</div>
 			</div>
 

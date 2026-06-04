@@ -203,6 +203,36 @@
   object-fit: contain;
 }
 
+.fridge-camera-modal {
+  width: min(92vw, 720px);
+}
+
+.fridge-camera-frame {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: #000;
+}
+
+.fridge-camera-frame video,
+.fridge-camera-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.fridge-camera-video {
+  transform: none;
+}
+
+.fridge-camera-error {
+  margin: 10px 0 0;
+  color: #ff8a8a;
+}
+
 .fridge-scan-results {
   flex: 1 1 auto;
   min-width: 0;
